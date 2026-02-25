@@ -1,0 +1,99 @@
+{
+  "version": "1.0",
+  "cells": [
+    {
+      "id": "cell_1",
+      "type": "markdown",
+      "source": "# Hello, notebook-lr!\n\nWelcome to notebook-lr, a Jupyter-like notebook system with persistent session context.",
+      "outputs": [],
+      "execution_count": null,
+      "metadata": {}
+    },
+    {
+      "id": "cell_2",
+      "type": "code",
+      "source": "# Define a variable\nmessage = \"Hello, World!\"\nprint(message)",
+      "outputs": [
+        {
+          "type": "stream",
+          "name": "stdout",
+          "text": "Hello, World!\n"
+        }
+      ],
+      "execution_count": 1,
+      "metadata": {}
+    },
+    {
+      "id": "cell_3",
+      "type": "code",
+      "source": "# The variable persists across cells\nprint(f\"Message from previous cell: {message}\")\n\n# Define more variables\ncount = 42\nitems = [1, 2, 3, 4, 5]",
+      "outputs": [
+        {
+          "type": "stream",
+          "name": "stdout",
+          "text": "Message from previous cell: Hello, World!\n"
+        }
+      ],
+      "execution_count": 2,
+      "metadata": {}
+    },
+    {
+      "id": "cell_4",
+      "type": "code",
+      "source": "# Use variables from previous cells\nresult = sum(items) + count\nprint(f\"Sum of items ({items}) plus count ({count}) = {result}\")",
+      "outputs": [
+        {
+          "type": "stream",
+          "name": "stdout",
+          "text": "Sum of items ([1, 2, 3, 4, 5]) plus count (42) = 57\n"
+        }
+      ],
+      "execution_count": 3,
+      "metadata": {}
+    },
+    {
+      "id": "cell_5",
+      "type": "markdown",
+      "source": "## Functions and Classes\n\nFunctions and classes also persist across cells!",
+      "outputs": [],
+      "execution_count": null,
+      "metadata": {}
+    },
+    {
+      "id": "cell_6",
+      "type": "code",
+      "source": "# Define a function\ndef greet(name):\n    return f\"Hello, {name}! Welcome to notebook-lr.\"",
+      "outputs": [],
+      "execution_count": 4,
+      "metadata": {}
+    },
+    {
+      "id": "cell_7",
+      "type": "code",
+      "source": "# Use the function\ngreeting = greet(\"Python Developer\")\nprint(greeting)",
+      "outputs": [
+        {
+          "type": "stream",
+          "name": "stdout",
+          "text": "Hello, Python Developer! Welcome to notebook-lr.\n"
+        }
+      ],
+      "execution_count": 5,
+      "metadata": {}
+    },
+    {
+      "id": "cell_8",
+      "type": "markdown",
+      "source": "## Session Persistence\n\nSave this notebook with session (press 'S' in the TUI) to keep all your variables for next time!",
+      "outputs": [],
+      "execution_count": null,
+      "metadata": {}
+    }
+  ],
+  "metadata": {
+    "name": "Hello Notebook",
+    "created": "2024-01-01T00:00:00",
+    "modified": "2024-01-01T00:00:00"
+  },
+  "session_state": null
+}

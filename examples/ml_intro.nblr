@@ -1,0 +1,71 @@
+{
+  "version": "1.0",
+  "cells": [
+    {
+      "id": "cell_intro",
+      "type": "markdown",
+      "source": "# Machine Learning Introduction\n\nThis notebook demonstrates a simple ML workflow with notebook-lr.",
+      "outputs": [],
+      "execution_count": null,
+      "metadata": {}
+    },
+    {
+      "id": "cell_imports",
+      "type": "code",
+      "source": "# Standard library imports\nimport random\nfrom collections import Counter",
+      "outputs": [],
+      "execution_count": 1,
+      "metadata": {}
+    },
+    {
+      "id": "cell_data",
+      "type": "code",
+      "source": "# Generate some sample data\ndef generate_data(n=100):\n    \"\"\"Generate random 2D data points with labels.\"\"\"\n    data = []\n    for _ in range(n):\n        x = random.random()\n        y = random.random()\n        # Simple decision boundary: y > x\n        label = 1 if y > x else 0\n        data.append((x, y, label))\n    return data\n\ntraining_data = generate_data(100)\nprint(f\"Generated {len(training_data)} data points\")\n\n# Count labels\nlabels = [d[2] for d in training_data]\nprint(f\"Label distribution: {Counter(labels)}\")",
+      "outputs": [
+        {
+          "type": "stream",
+          "name": "stdout",
+          "text": "Generated 100 data points\nLabel distribution: Counter({1: 53, 0: 47})\n"
+        }
+      ],
+      "execution_count": 2,
+      "metadata": {}
+    },
+    {
+      "id": "cell_model",
+      "type": "code",
+      "source": "# Simple K-Nearest Neighbors classifier\ndef euclidean_distance(p1, p2):\n    \"\"\"Calculate Euclidean distance between two points.\"\"\"\n    return ((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)**0.5\n\ndef knn_predict(point, training_data, k=3):\n    \"\"\"Predict label using K-nearest neighbors.\"\"\"\n    # Calculate distances to all training points\n    distances = []\n    for data_point in training_data:\n        dist = euclidean_distance(point, data_point[:2])\n        distances.append((dist, data_point[2]))\n    \n    # Sort by distance and get k nearest\n    distances.sort()\n    k_nearest = distances[:k]\n    \n    # Majority vote\n    votes = [label for _, label in k_nearest]\n    return Counter(votes).most_common(1)[0][0]",
+      "outputs": [],
+      "execution_count": 3,
+      "metadata": {}
+    },
+    {
+      "id": "cell_test",
+      "type": "code",
+      "source": "# Test the classifier\ntest_data = generate_data(20)\n\ncorrect = 0\nfor x, y, true_label in test_data:\n    predicted = knn_predict((x, y), training_data, k=5)\n    if predicted == true_label:\n        correct += 1\n\naccuracy = correct / len(test_data)\nprint(f\"Test accuracy: {accuracy:.2%} ({correct}/{len(test_data)})\")",
+      "outputs": [
+        {
+          "type": "stream",
+          "name": "stdout",
+          "text": "Test accuracy: 100.00% (20/20)\n"
+        }
+      ],
+      "execution_count": 4,
+      "metadata": {}
+    },
+    {
+      "id": "cell_conclusion",
+      "type": "markdown",
+      "source": "## Summary\n\nWe built a simple KNN classifier from scratch! The session state preserves:\n- `training_data`: Our training dataset\n- `knn_predict`: Our classifier function\n- All imports\n\nSave with session to continue experimenting later!",
+      "outputs": [],
+      "execution_count": null,
+      "metadata": {}
+    }
+  ],
+  "metadata": {
+    "name": "ML Introduction",
+    "created": "2024-01-01T00:00:00",
+    "modified": "2024-01-01T00:00:00"
+  },
+  "session_state": null
+}

@@ -1,0 +1,137 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1772028831607,
+  "projectRoot": "/home/roachbot/.openclaw/workspace/notebook-lr",
+  "techStack": {
+    "languages": [],
+    "frameworks": [],
+    "packageManager": null,
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": null,
+    "testCommand": null,
+    "lintCommand": null,
+    "devCommand": null,
+    "scripts": {}
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [],
+    "gitBranches": null
+  },
+  "customNotes": [],
+  "directoryMap": {},
+  "hotPaths": [
+    {
+      "path": "notebook_lr/session.py",
+      "accessCount": 5,
+      "lastAccessed": 1772029490493,
+      "type": "file"
+    },
+    {
+      "path": "tests/test_session.py",
+      "accessCount": 4,
+      "lastAccessed": 1772029456559,
+      "type": "file"
+    },
+    {
+      "path": "tests/test_kernel.py",
+      "accessCount": 3,
+      "lastAccessed": 1772029476868,
+      "type": "file"
+    },
+    {
+      "path": "pyproject.toml",
+      "accessCount": 3,
+      "lastAccessed": 1772029553335,
+      "type": "file"
+    },
+    {
+      "path": "requirements.txt",
+      "accessCount": 2,
+      "lastAccessed": 1772029553658,
+      "type": "file"
+    },
+    {
+      "path": "PLAN.md",
+      "accessCount": 1,
+      "lastAccessed": 1772028843463,
+      "type": "file"
+    },
+    {
+      "path": "notebook_lr/__init__.py",
+      "accessCount": 1,
+      "lastAccessed": 1772028881756,
+      "type": "file"
+    },
+    {
+      "path": "notebook_lr/kernel.py",
+      "accessCount": 1,
+      "lastAccessed": 1772028955705,
+      "type": "file"
+    },
+    {
+      "path": "notebook_lr/notebook.py",
+      "accessCount": 1,
+      "lastAccessed": 1772029005175,
+      "type": "file"
+    },
+    {
+      "path": "notebook_lr/utils.py",
+      "accessCount": 1,
+      "lastAccessed": 1772029005813,
+      "type": "file"
+    },
+    {
+      "path": "notebook_lr/cli.py",
+      "accessCount": 1,
+      "lastAccessed": 1772029164886,
+      "type": "file"
+    },
+    {
+      "path": "notebook_lr/web.py",
+      "accessCount": 1,
+      "lastAccessed": 1772029165144,
+      "type": "file"
+    },
+    {
+      "path": "tests/test_notebook.py",
+      "accessCount": 1,
+      "lastAccessed": 1772029288518,
+      "type": "file"
+    },
+    {
+      "path": "tests/__init__.py",
+      "accessCount": 1,
+      "lastAccessed": 1772029289052,
+      "type": "file"
+    },
+    {
+      "path": "examples/hello.nblr",
+      "accessCount": 1,
+      "lastAccessed": 1772029370735,
+      "type": "file"
+    },
+    {
+      "path": "examples/ml_intro.nblr",
+      "accessCount": 1,
+      "lastAccessed": 1772029371017,
+      "type": "file"
+    },
+    {
+      "path": "README.md",
+      "accessCount": 1,
+      "lastAccessed": 1772029371354,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}
