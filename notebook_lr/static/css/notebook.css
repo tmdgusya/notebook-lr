@@ -1,5 +1,5 @@
 /* ============================================================
-   notebook.css — Google Colab-like styling for notebook-lr
+   notebook.css — Google Colab-style UI for notebook-lr
    ============================================================ */
 
 /* 1. Reset & Base
@@ -15,11 +15,12 @@ html {
 body {
   margin: 0;
   padding: 0;
-  font-family: 'Google Sans', Roboto, Arial, sans-serif;
+  font-family: 'Roboto', 'Google Sans', Arial, Helvetica, sans-serif;
   background: #f8f9fa;
   color: #202124;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 a {
@@ -54,29 +55,41 @@ button:focus-visible {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #ffffff;
+  background: #f9f9f9;
   border-bottom: 1px solid #e0e0e0;
-  padding: 8px 16px;
-  min-height: 56px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  padding: 0 16px;
+  height: 48px;
+  min-height: 48px;
 }
 
 #notebook-header h1 {
   margin: 0;
-  font-size: 18px;
-  font-weight: 500;
+  font-size: 17px;
+  font-weight: 400;
   color: #202124;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 400px;
+  letter-spacing: 0.01em;
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   min-width: 0;
+}
+
+/* Colab-style orange accent bar before the title */
+.header-left::before {
+  content: '';
+  display: block;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  background: linear-gradient(135deg, #f9ab00 0%, #e37400 100%);
+  flex-shrink: 0;
 }
 
 .header-right {
@@ -84,6 +97,15 @@ button:focus-visible {
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
+}
+
+#notebook-info {
+  font-size: 12px;
+  color: #5f6368;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 450px;
 }
 
 .header-info {
@@ -133,15 +155,16 @@ button:focus-visible {
    ============================================================ */
 #toolbar {
   position: sticky;
-  top: 56px;
+  top: 48px;
   z-index: 90;
   display: flex;
   align-items: center;
-  gap: 2px;
-  background: #ffffff;
-  border-bottom: 1px solid #e0e0e0;
-  padding: 4px 12px;
-  min-height: 44px;
+  gap: 1px;
+  background: #f9f9f9;
+  border-bottom: 1px solid #dadce0;
+  padding: 2px 16px;
+  height: 40px;
+  min-height: 40px;
   flex-wrap: wrap;
 }
 
@@ -150,26 +173,27 @@ button:focus-visible {
   align-items: center;
   justify-content: center;
   gap: 4px;
-  padding: 6px 10px;
+  padding: 4px 12px;
   border-radius: 4px;
   font-size: 13px;
   font-weight: 500;
-  color: #3c4043;
+  color: #5f6368;
   background: transparent;
   border: none;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: background 0.1s ease, color 0.1s ease;
   white-space: nowrap;
-  min-height: 32px;
+  min-height: 30px;
+  letter-spacing: 0.01em;
 }
 
 .toolbar-btn:hover {
-  background: #f1f3f4;
+  background: #e8eaed;
   color: #202124;
 }
 
 .toolbar-btn:active {
-  background: #e8eaed;
+  background: #dadce0;
 }
 
 .toolbar-btn svg,
@@ -188,18 +212,19 @@ button:focus-visible {
 }
 
 .toolbar-btn-danger {
-  color: #ea4335;
+  color: #d93025;
 }
 
 .toolbar-btn-danger:hover {
   background: #fce8e6;
+  color: #c5221f;
 }
 
 .toolbar-separator {
   width: 1px;
-  height: 24px;
-  background: #e0e0e0;
-  margin: 0 4px;
+  height: 20px;
+  background: #dadce0;
+  margin: 0 6px;
   flex-shrink: 0;
 }
 
@@ -210,7 +235,7 @@ button:focus-visible {
 /* Kernel selector */
 .kernel-selector {
   padding: 4px 8px;
-  border: 1px solid #e0e0e0;
+  border: 1px solid #dadce0;
   border-radius: 4px;
   background: #ffffff;
   font-size: 13px;
@@ -229,9 +254,9 @@ button:focus-visible {
 /* 4. Cells container (#cells-container)
    ============================================================ */
 #cells-container {
-  max-width: 900px;
+  max-width: 880px;
   margin: 0 auto;
-  padding: 16px 0 64px;
+  padding: 8px 0 80px;
 }
 
 /* Inner wrapper used to measure width */
@@ -248,10 +273,10 @@ button:focus-visible {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 24px;
-  margin: 0 4px;
+  height: 28px;
+  margin: 0;
   opacity: 0;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.15s ease;
 }
 
 /* Show divider on hover of itself or adjacent cell */
@@ -264,7 +289,7 @@ button:focus-visible {
 /* Always show the first and last dividers when container is hovered */
 #cells-container:hover .add-cell-divider:first-child,
 #cells-container:hover .add-cell-divider:last-child {
-  opacity: 0.4;
+  opacity: 0.5;
 }
 
 #cells-container:hover .add-cell-divider:first-child:hover,
@@ -274,10 +299,10 @@ button:focus-visible {
 
 .divider-line {
   position: absolute;
-  left: 0;
+  left: 48px;
   right: 0;
   height: 1px;
-  background: #e0e0e0;
+  background: #dadce0;
 }
 
 .divider-buttons {
@@ -285,9 +310,9 @@ button:focus-visible {
   z-index: 1;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
   background: #f8f9fa;
-  padding: 0 8px;
+  padding: 0 12px;
 }
 
 .add-code-btn,
@@ -295,29 +320,30 @@ button:focus-visible {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 10px;
-  border-radius: 12px;
+  padding: 2px 12px;
+  border-radius: 14px;
   font-size: 12px;
   font-weight: 500;
   color: #5f6368;
   background: #ffffff;
-  border: 1px solid #e0e0e0;
+  border: 1px solid #dadce0;
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+  transition: background 0.1s ease, border-color 0.1s ease, color 0.1s ease, box-shadow 0.1s ease;
+  line-height: 20px;
 }
 
 .add-code-btn:hover {
   background: #e8f0fe;
   border-color: #1a73e8;
   color: #1a73e8;
-  box-shadow: 0 1px 3px rgba(26, 115, 232, 0.2);
+  box-shadow: 0 1px 2px rgba(26, 115, 232, 0.15);
 }
 
 .add-md-btn:hover {
   background: #e6f4ea;
   border-color: #34a853;
-  color: #34a853;
-  box-shadow: 0 1px 3px rgba(52, 168, 83, 0.2);
+  color: #137333;
+  box-shadow: 0 1px 2px rgba(52, 168, 83, 0.15);
 }
 
 .add-code-btn .btn-icon,
@@ -335,35 +361,36 @@ button:focus-visible {
   align-items: stretch;
   background: #ffffff;
   border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  margin: 0 4px;
-  overflow: hidden;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  border-radius: 4px;
+  margin: 0;
+  overflow: visible;
+  transition: border-color 0.1s ease, box-shadow 0.1s ease;
   position: relative;
 }
 
 .cell:hover {
-  border-color: #c5c7cb;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  border-color: #bdc1c6;
+  box-shadow: 0 1px 3px rgba(60, 64, 67, 0.15);
 }
 
 .cell.selected {
+  border-color: #1a73e8;
   border-left: 3px solid #1a73e8;
-  box-shadow: 0 1px 6px rgba(26, 115, 232, 0.15);
+  box-shadow: 0 1px 3px rgba(26, 115, 232, 0.2);
 }
 
 .cell.selected:hover {
   border-color: #1a73e8;
-  border-left-color: #1a73e8;
 }
 
 .cell.running .cell-gutter {
-  animation: pulse-gutter 1.2s ease-in-out infinite;
+  animation: pulse-gutter 1.5s ease-in-out infinite;
 }
 
-.cell.running .cell-exec-count::after {
-  content: '*';
+.cell.running .run-cell-btn {
+  opacity: 1;
   color: #fbbc04;
+  animation: spin 1s linear infinite;
 }
 
 .cell.has-error {
@@ -372,19 +399,21 @@ button:focus-visible {
 
 .cell.has-error.selected {
   border-left-color: #ea4335;
+  border-color: #ea4335;
 }
 
 /* Markdown cell styling */
 .cell.markdown-cell {
-  background: #fafafa;
+  background: #ffffff;
 }
 
 .cell.markdown-cell .cell-gutter {
-  background: #f5f5f5;
+  background: #ffffff;
 }
 
 .cell.markdown-cell.selected {
   border-left-color: #34a853;
+  border-color: #34a853;
 }
 
 /* Cell in edit mode */
@@ -393,38 +422,40 @@ button:focus-visible {
 }
 
 
-/* 7. Cell gutter (.cell-gutter)
+/* 7. Cell gutter (.cell-gutter) — Colab-style play button + exec count
    ============================================================ */
 .cell-gutter {
-  width: 52px;
+  width: 48px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  padding: 8px 4px;
-  background: #fafafa;
-  border-right: 1px solid #f0f0f0;
-  gap: 4px;
+  padding: 6px 0;
+  background: #f7f7f7;
+  border-right: none;
+  gap: 2px;
 }
 
 .cell-exec-count {
   font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
-  font-size: 11px;
-  color: #5f6368;
+  font-size: 10px;
+  color: #80868b;
   line-height: 1.4;
-  min-width: 24px;
-  text-align: right;
-  padding: 2px;
+  min-width: 20px;
+  text-align: center;
+  padding: 0;
   white-space: nowrap;
+  user-select: none;
 }
 
+/* Remove the bracket pseudo-elements — the JS already wraps in [ ] */
 .cell-exec-count::before {
-  content: '[';
+  content: '';
 }
 
 .cell-exec-count::after {
-  content: ']';
+  content: '';
 }
 
 .cell-exec-count.empty::before {
@@ -435,39 +466,50 @@ button:focus-visible {
   content: '';
 }
 
+/* Colab-style circular play button */
 .run-cell-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: transparent;
-  border: none;
+  border: 1.5px solid #dadce0;
   cursor: pointer;
   color: #5f6368;
-  font-size: 12px;
-  opacity: 0;
-  transition: background 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+  font-size: 13px;
+  transition: background 0.1s ease, color 0.1s ease, border-color 0.1s ease, opacity 0.15s ease;
   flex-shrink: 0;
+  opacity: 0;
 }
 
+/* Show play button on cell hover */
 .cell:hover .run-cell-btn {
+  opacity: 1;
+}
+
+/* Show play button on selected cell */
+.cell.selected .run-cell-btn {
   opacity: 1;
 }
 
 .run-cell-btn:hover {
   background: #e8f0fe;
+  border-color: #1a73e8;
   color: #1a73e8;
 }
 
 .run-cell-btn:active {
   background: #d2e3fc;
+  border-color: #1a73e8;
+  color: #174ea6;
 }
 
 .run-cell-btn.running-state {
   opacity: 1;
   color: #fbbc04;
+  border-color: #fbbc04;
   animation: spin 1s linear infinite;
 }
 
@@ -493,13 +535,19 @@ button:focus-visible {
 }
 
 .cell-editor {
-  min-height: 40px;
+  min-height: 36px;
   position: relative;
+  background: #f7f7f7;
+}
+
+/* Markdown cells: white editor background */
+.cell.markdown-cell .cell-editor {
+  background: #ffffff;
 }
 
 .cell-editor textarea {
   width: 100%;
-  min-height: 40px;
+  min-height: 36px;
   padding: 8px 12px;
   border: none;
   outline: none;
@@ -513,8 +561,8 @@ button:focus-visible {
 
 /* Markdown rendered view */
 .cell-markdown-view {
-  padding: 8px 12px;
-  min-height: 40px;
+  padding: 12px 16px;
+  min-height: 36px;
   color: #202124;
   line-height: 1.6;
 }
@@ -543,14 +591,14 @@ button:focus-visible {
   font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
   font-size: 0.9em;
   background: #f1f3f4;
-  padding: 2px 4px;
-  border-radius: 3px;
-  color: #c7254e;
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #37474f;
 }
 
 .cell-markdown-view pre {
   background: #f1f3f4;
-  padding: 12px;
+  padding: 12px 16px;
   border-radius: 4px;
   overflow-x: auto;
 }
@@ -564,8 +612,9 @@ button:focus-visible {
 .cell-markdown-view blockquote {
   margin: 8px 0;
   padding: 8px 16px;
-  border-left: 4px solid #e0e0e0;
+  border-left: 4px solid #dadce0;
   color: #5f6368;
+  background: #f8f9fa;
 }
 
 .cell-markdown-view ul,
@@ -586,7 +635,7 @@ button:focus-visible {
 
 .cell-markdown-view th,
 .cell-markdown-view td {
-  border: 1px solid #e0e0e0;
+  border: 1px solid #dadce0;
   padding: 6px 12px;
   text-align: left;
 }
@@ -600,16 +649,17 @@ button:focus-visible {
   background: #f8f9fa;
 }
 
-/* Cell output */
+/* Cell output — Colab puts output in a white area below the gray code area */
 .cell-output {
   padding: 8px 12px;
-  background: #f8f9fa;
-  border-top: 1px solid #e8e8e8;
+  background: #ffffff;
+  border-top: 1px solid #ebebeb;
   font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
   font-size: 13px;
   line-height: 1.5;
   overflow-x: auto;
   word-break: break-word;
+  color: #202124;
 }
 
 .cell-output.empty {
@@ -622,47 +672,62 @@ button:focus-visible {
 }
 
 
-/* 9. Cell actions (.cell-actions)
+/* 9. Cell actions (.cell-actions) — Colab-style top-right hover toolbar
    ============================================================ */
 .cell-actions {
+  position: absolute;
+  top: 4px;
+  right: 4px;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  justify-content: flex-start;
-  padding: 4px 2px;
-  gap: 2px;
+  justify-content: flex-end;
+  padding: 2px;
+  gap: 0;
   opacity: 0;
-  transition: opacity 0.15s ease;
-  flex-shrink: 0;
+  transition: opacity 0.1s ease;
+  z-index: 5;
+  background: #f7f7f7;
+  border-radius: 4px;
+  border: 1px solid transparent;
 }
 
 .cell:hover .cell-actions {
   opacity: 1;
+  border-color: #dadce0;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(60, 64, 67, 0.1);
 }
 
-.cell-action-btn {
+.cell-action-btn,
+.delete-cell-btn,
+.move-up-btn,
+.move-down-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   border-radius: 4px;
   background: transparent;
   border: none;
   cursor: pointer;
   color: #5f6368;
   font-size: 14px;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: background 0.1s ease, color 0.1s ease;
 }
 
-.cell-action-btn:hover {
-  background: #f1f3f4;
+.cell-action-btn:hover,
+.move-up-btn:hover,
+.move-down-btn:hover {
+  background: #e8eaed;
   color: #202124;
 }
 
+.delete-cell-btn:hover,
 .cell-action-btn.delete-btn:hover {
   background: #fce8e6;
-  color: #ea4335;
+  color: #d93025;
 }
 
 .cell-action-btn svg {
@@ -671,26 +736,27 @@ button:focus-visible {
 }
 
 
-/* 10. CodeMirror overrides
+/* 10. CodeMirror overrides — Colab look
    ============================================================ */
 .CodeMirror {
   height: auto;
-  min-height: 40px;
+  min-height: 36px;
   font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
   font-size: 14px;
   line-height: 1.5;
   color: #202124;
   background: transparent;
+  padding: 0;
 }
 
 .CodeMirror-scroll {
-  min-height: 40px;
+  min-height: 36px;
   overflow-x: auto;
   overflow-y: hidden;
 }
 
 .CodeMirror-lines {
-  padding: 8px 0;
+  padding: 6px 0;
 }
 
 .CodeMirror pre.CodeMirror-line,
@@ -703,18 +769,50 @@ button:focus-visible {
   border-right: none;
 }
 
+.CodeMirror-linenumber {
+  color: #80868b;
+  font-size: 12px;
+  padding: 0 4px 0 8px;
+  min-width: 28px;
+}
+
 .CodeMirror-focused .CodeMirror-cursor {
   border-left-color: #1a73e8;
+  border-left-width: 2px;
 }
 
 .CodeMirror-selected {
   background: #d2e3fc !important;
 }
 
+.CodeMirror-activeline-background {
+  background: rgba(26, 115, 232, 0.04);
+}
+
 /* Ensure CodeMirror fills its container */
 .cell-editor .CodeMirror {
   width: 100%;
 }
+
+/* Syntax colors — Colab-inspired */
+.cm-s-default .cm-keyword { color: #0000ff; }
+.cm-s-default .cm-atom { color: #219; }
+.cm-s-default .cm-number { color: #164; }
+.cm-s-default .cm-def { color: #00f; }
+.cm-s-default .cm-variable { color: #202124; }
+.cm-s-default .cm-variable-2 { color: #05a; }
+.cm-s-default .cm-variable-3,
+.cm-s-default .cm-type { color: #085; }
+.cm-s-default .cm-comment { color: #5f6368; font-style: italic; }
+.cm-s-default .cm-string { color: #a11; }
+.cm-s-default .cm-string-2 { color: #f50; }
+.cm-s-default .cm-meta { color: #555; }
+.cm-s-default .cm-qualifier { color: #555; }
+.cm-s-default .cm-builtin { color: #30a; }
+.cm-s-default .cm-bracket { color: #997; }
+.cm-s-default .cm-tag { color: #170; }
+.cm-s-default .cm-attribute { color: #00c; }
+.cm-s-default .cm-property { color: #202124; }
 
 
 /* 11. Output types
@@ -732,28 +830,30 @@ button:focus-visible {
 
 .output-stderr {
   color: #856404;
-  background: #fff8e1;
-  padding: 4px 8px;
-  border-radius: 3px;
+  background: #fef7e0;
+  padding: 6px 10px;
+  border-radius: 4px;
   border-left: 3px solid #fbbc04;
   margin: 4px 0;
   white-space: pre-wrap;
+  font-size: 12px;
 }
 
 .output-error {
   background: #fce8e6;
   color: #c5221f;
-  padding: 8px;
+  padding: 10px 12px;
   border-radius: 4px;
   border-left: 3px solid #ea4335;
   margin: 4px 0;
   white-space: pre-wrap;
   font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
+  font-size: 13px;
 }
 
 .output-error .error-name {
   font-weight: 700;
-  color: #ea4335;
+  color: #d93025;
 }
 
 .output-error .error-value {
@@ -802,26 +902,63 @@ button:focus-visible {
 }
 
 
-/* 12. Variables panel (#variables-panel)
+/* 12. Variables panel (#variables-panel) — Colab-style side panel
    ============================================================ */
 #variables-panel {
   position: fixed;
   right: 0;
-  top: 100px;
+  top: 88px;
   bottom: 0;
   width: 320px;
   background: #ffffff;
-  border-left: 1px solid #e0e0e0;
-  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+  border-left: 1px solid #dadce0;
+  box-shadow: -2px 0 8px rgba(60, 64, 67, 0.1);
   z-index: 80;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  transition: transform 0.25s ease;
+  transition: transform 0.2s ease;
 }
 
 #variables-panel.hidden {
   display: none;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #dadce0;
+  flex-shrink: 0;
+  background: #f8f9fa;
+}
+
+.panel-header h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: #202124;
+}
+
+.close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: #5f6368;
+  font-size: 18px;
+  transition: background 0.1s ease;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.close-btn:hover {
+  background: #e8eaed;
+  color: #202124;
 }
 
 .vars-panel-header {
@@ -829,11 +966,12 @@ button:focus-visible {
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid #dadce0;
   font-weight: 500;
   font-size: 14px;
   color: #202124;
   flex-shrink: 0;
+  background: #f8f9fa;
 }
 
 .vars-panel-close {
@@ -844,18 +982,22 @@ button:focus-visible {
   height: 28px;
   border-radius: 50%;
   color: #5f6368;
-  transition: background 0.15s ease;
+  transition: background 0.1s ease;
 }
 
 .vars-panel-close:hover {
-  background: #f1f3f4;
+  background: #e8eaed;
   color: #202124;
 }
 
 .vars-panel-body {
   flex: 1;
   overflow-y: auto;
-  padding: 8px;
+  padding: 0;
+}
+
+#variables-content {
+  padding: 0;
 }
 
 .vars-table {
@@ -866,17 +1008,20 @@ button:focus-visible {
 
 .vars-table th {
   background: #f1f3f4;
-  padding: 6px 8px;
+  padding: 8px 12px;
   text-align: left;
-  font-weight: 600;
+  font-weight: 500;
   color: #5f6368;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid #dadce0;
   position: sticky;
   top: 0;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.05em;
 }
 
 .vars-table td {
-  padding: 6px 8px;
+  padding: 6px 12px;
   border-bottom: 1px solid #f0f0f0;
   vertical-align: top;
   word-break: break-all;
@@ -890,11 +1035,13 @@ button:focus-visible {
   font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
   color: #202124;
   font-weight: 500;
+  font-size: 12px;
 }
 
 .vars-table .var-type {
   color: #1a73e8;
   font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
+  font-size: 11px;
 }
 
 .vars-table .var-value {
@@ -903,6 +1050,8 @@ button:focus-visible {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
+  font-size: 11px;
 }
 
 .vars-empty {
@@ -920,16 +1069,16 @@ button:focus-visible {
   bottom: 24px;
   left: 50%;
   transform: translateX(-50%) translateY(0);
-  background: #3c4043;
+  background: #323232;
   color: #ffffff;
-  padding: 10px 20px;
-  border-radius: 6px;
+  padding: 10px 24px;
+  border-radius: 8px;
   font-size: 13px;
   font-weight: 500;
   z-index: 1000;
   pointer-events: none;
   opacity: 1;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
   transition: opacity 0.3s ease, transform 0.3s ease;
   white-space: nowrap;
   max-width: calc(100vw - 48px);
@@ -944,15 +1093,15 @@ button:focus-visible {
 }
 
 #notification.success {
-  background: #34a853;
+  background: #1e8e3e;
 }
 
 #notification.error {
-  background: #ea4335;
+  background: #d93025;
 }
 
 #notification.warning {
-  background: #fbbc04;
+  background: #f9ab00;
   color: #202124;
 }
 
@@ -962,7 +1111,7 @@ button:focus-visible {
 @media (max-width: 960px) {
   #cells-container {
     max-width: 100%;
-    padding: 12px 0;
+    padding: 8px 0;
   }
 
   #variables-panel {
@@ -972,8 +1121,9 @@ button:focus-visible {
 
 @media (max-width: 768px) {
   #notebook-header {
-    padding: 6px 12px;
-    min-height: 48px;
+    padding: 0 12px;
+    height: 44px;
+    min-height: 44px;
   }
 
   #notebook-header h1 {
@@ -982,13 +1132,13 @@ button:focus-visible {
   }
 
   #toolbar {
-    top: 48px;
-    padding: 4px 8px;
-    gap: 1px;
+    top: 44px;
+    padding: 2px 8px;
+    gap: 0;
   }
 
   .toolbar-btn {
-    padding: 5px 7px;
+    padding: 4px 6px;
     font-size: 12px;
   }
 
@@ -1000,8 +1150,13 @@ button:focus-visible {
     width: 40px;
   }
 
+  .run-cell-btn {
+    width: 28px;
+    height: 28px;
+  }
+
   .cell-exec-count {
-    font-size: 10px;
+    font-size: 9px;
   }
 
   #variables-panel {
@@ -1012,8 +1167,8 @@ button:focus-visible {
     right: 0;
     height: 50vh;
     border-left: none;
-    border-top: 1px solid #e0e0e0;
-    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+    border-top: 1px solid #dadce0;
+    box-shadow: 0 -2px 8px rgba(60, 64, 67, 0.1);
   }
 }
 
@@ -1023,13 +1178,22 @@ button:focus-visible {
     max-width: 140px;
   }
 
+  .header-left::before {
+    width: 20px;
+    height: 20px;
+  }
+
   .header-info {
     display: none;
   }
 
   .cell {
-    border-radius: 4px;
-    margin: 0 2px;
+    border-radius: 2px;
+  }
+
+  .cell-actions {
+    top: 2px;
+    right: 2px;
   }
 
   #notification {
@@ -1053,10 +1217,10 @@ button:focus-visible {
 
 @keyframes pulse-gutter {
   0%, 100% {
-    background: #fafafa;
+    background: #f7f7f7;
   }
   50% {
-    background: #fff8e1;
+    background: #fef7e0;
   }
 }
 
@@ -1095,7 +1259,7 @@ button:focus-visible {
 }
 
 
-/* Misc utility
+/* 16. Misc utility
    ============================================================ */
 .visually-hidden {
   position: absolute;
@@ -1119,25 +1283,49 @@ button:focus-visible {
   white-space: nowrap;
 }
 
-/* Scrollbar styling for output areas */
+/* Scrollbar styling — thin Colab-like */
 .cell-output::-webkit-scrollbar,
-.vars-panel-body::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+.vars-panel-body::-webkit-scrollbar,
+#variables-content::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
 }
 
 .cell-output::-webkit-scrollbar-track,
-.vars-panel-body::-webkit-scrollbar-track {
+.vars-panel-body::-webkit-scrollbar-track,
+#variables-content::-webkit-scrollbar-track {
   background: transparent;
 }
 
 .cell-output::-webkit-scrollbar-thumb,
-.vars-panel-body::-webkit-scrollbar-thumb {
+.vars-panel-body::-webkit-scrollbar-thumb,
+#variables-content::-webkit-scrollbar-thumb {
   background: #dadce0;
   border-radius: 3px;
 }
 
 .cell-output::-webkit-scrollbar-thumb:hover,
-.vars-panel-body::-webkit-scrollbar-thumb:hover {
+.vars-panel-body::-webkit-scrollbar-thumb:hover,
+#variables-content::-webkit-scrollbar-thumb:hover {
   background: #bdc1c6;
+}
+
+/* Firefox scrollbar */
+.cell-output,
+.vars-panel-body,
+#variables-content {
+  scrollbar-width: thin;
+  scrollbar-color: #dadce0 transparent;
+}
+
+/* Error banner for initialization failures */
+.error-banner {
+  padding: 20px;
+  margin: 20px;
+  background: #fce8e6;
+  color: #c5221f;
+  border-radius: 8px;
+  font-size: 14px;
+  text-align: center;
+  border: 1px solid #fad2cf;
 }
