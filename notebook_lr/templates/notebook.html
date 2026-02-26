@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>notebook-lr</title>
+
+  <!-- CodeMirror 5 from CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/theme/monokai.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/python/python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/markdown/markdown.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/addon/edit/closebrackets.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/addon/edit/matchbrackets.min.js"></script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/static/css/notebook.css">
+</head>
+<body>
+  <div id="notebook-app">
+    <header id="notebook-header">
+      <div class="header-left">
+        <h1>notebook-lr</h1>
+      </div>
+      <div id="notebook-info"></div>
+    </header>
+
+    <div id="toolbar">
+      <button id="run-all-btn" class="toolbar-btn" title="Run All Cells">&#9654;&#9654; Run All</button>
+      <div class="toolbar-separator"></div>
+      <button id="save-btn" class="toolbar-btn" title="Save">Save</button>
+      <button id="save-session-btn" class="toolbar-btn" title="Save with Session">Save + Session</button>
+      <button id="load-btn" class="toolbar-btn" title="Load Notebook">Load</button>
+      <input type="file" id="load-file-input" accept=".nblr" hidden>
+      <div class="toolbar-separator"></div>
+      <button id="vars-btn" class="toolbar-btn" title="Show Variables">{x} Variables</button>
+      <button id="clear-vars-btn" class="toolbar-btn toolbar-btn-danger" title="Clear All Variables">Clear Vars</button>
+    </div>
+
+    <div id="cells-container">
+      <!-- Cells and add-cell dividers rendered dynamically by cells.js -->
+    </div>
+
+    <div id="variables-panel" class="panel hidden">
+      <div class="panel-header">
+        <h3>Variables</h3>
+        <button id="close-vars-btn" class="close-btn">&times;</button>
+      </div>
+      <div id="variables-content"></div>
+    </div>
+  </div>
+
+  <!-- JS modules loaded in dependency order -->
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/editor.js"></script>
+  <script src="/static/js/cells.js"></script>
+  <script src="/static/js/execution.js"></script>
+  <script src="/static/js/toolbar.js"></script>
+  <script src="/static/js/fileops.js"></script>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

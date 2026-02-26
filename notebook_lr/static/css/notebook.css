@@ -1,0 +1,1143 @@
+/* ============================================================
+   notebook.css — Google Colab-like styling for notebook-lr
+   ============================================================ */
+
+/* 1. Reset & Base
+   ============================================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 14px;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Google Sans', Roboto, Arial, sans-serif;
+  background: #f8f9fa;
+  color: #202124;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: #1a73e8;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+  border: none;
+  background: none;
+  padding: 0;
+}
+
+button:focus-visible {
+  outline: 2px solid #1a73e8;
+  outline-offset: 2px;
+}
+
+
+/* 2. Header (#notebook-header)
+   ============================================================ */
+#notebook-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 8px 16px;
+  min-height: 56px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+#notebook-header h1 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 500;
+  color: #202124;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 400px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.header-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #5f6368;
+}
+
+.kernel-status {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  background: #f1f3f4;
+  font-size: 12px;
+  color: #5f6368;
+}
+
+.kernel-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #34a853;
+  flex-shrink: 0;
+}
+
+.kernel-status-dot.busy {
+  background: #fbbc04;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+.kernel-status-dot.dead {
+  background: #ea4335;
+}
+
+.notebook-logo {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+
+/* 3. Toolbar (#toolbar)
+   ============================================================ */
+#toolbar {
+  position: sticky;
+  top: 56px;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: #ffffff;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 4px 12px;
+  min-height: 44px;
+  flex-wrap: wrap;
+}
+
+.toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #3c4043;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+  min-height: 32px;
+}
+
+.toolbar-btn:hover {
+  background: #f1f3f4;
+  color: #202124;
+}
+
+.toolbar-btn:active {
+  background: #e8eaed;
+}
+
+.toolbar-btn svg,
+.toolbar-btn .icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.toolbar-btn-primary {
+  color: #1a73e8;
+}
+
+.toolbar-btn-primary:hover {
+  background: #e8f0fe;
+}
+
+.toolbar-btn-danger {
+  color: #ea4335;
+}
+
+.toolbar-btn-danger:hover {
+  background: #fce8e6;
+}
+
+.toolbar-separator {
+  width: 1px;
+  height: 24px;
+  background: #e0e0e0;
+  margin: 0 4px;
+  flex-shrink: 0;
+}
+
+.toolbar-spacer {
+  flex: 1;
+}
+
+/* Kernel selector */
+.kernel-selector {
+  padding: 4px 8px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  background: #ffffff;
+  font-size: 13px;
+  color: #3c4043;
+  cursor: pointer;
+  outline: none;
+  max-width: 180px;
+}
+
+.kernel-selector:focus {
+  border-color: #1a73e8;
+  box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+}
+
+
+/* 4. Cells container (#cells-container)
+   ============================================================ */
+#cells-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 16px 0 64px;
+}
+
+/* Inner wrapper used to measure width */
+.cells-inner {
+  display: flex;
+  flex-direction: column;
+}
+
+
+/* 5. Add-cell divider (.add-cell-divider)
+   ============================================================ */
+.add-cell-divider {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  margin: 0 4px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+/* Show divider on hover of itself or adjacent cell */
+.add-cell-divider:hover,
+.cell:hover + .add-cell-divider,
+.add-cell-divider:has(+ .cell:hover) {
+  opacity: 1;
+}
+
+/* Always show the first and last dividers when container is hovered */
+#cells-container:hover .add-cell-divider:first-child,
+#cells-container:hover .add-cell-divider:last-child {
+  opacity: 0.4;
+}
+
+#cells-container:hover .add-cell-divider:first-child:hover,
+#cells-container:hover .add-cell-divider:last-child:hover {
+  opacity: 1;
+}
+
+.divider-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #e0e0e0;
+}
+
+.divider-buttons {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #f8f9fa;
+  padding: 0 8px;
+}
+
+.add-code-btn,
+.add-md-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #5f6368;
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.add-code-btn:hover {
+  background: #e8f0fe;
+  border-color: #1a73e8;
+  color: #1a73e8;
+  box-shadow: 0 1px 3px rgba(26, 115, 232, 0.2);
+}
+
+.add-md-btn:hover {
+  background: #e6f4ea;
+  border-color: #34a853;
+  color: #34a853;
+  box-shadow: 0 1px 3px rgba(52, 168, 83, 0.2);
+}
+
+.add-code-btn .btn-icon,
+.add-md-btn .btn-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+
+/* 6. Cell (.cell)
+   ============================================================ */
+.cell {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  margin: 0 4px;
+  overflow: hidden;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  position: relative;
+}
+
+.cell:hover {
+  border-color: #c5c7cb;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.cell.selected {
+  border-left: 3px solid #1a73e8;
+  box-shadow: 0 1px 6px rgba(26, 115, 232, 0.15);
+}
+
+.cell.selected:hover {
+  border-color: #1a73e8;
+  border-left-color: #1a73e8;
+}
+
+.cell.running .cell-gutter {
+  animation: pulse-gutter 1.2s ease-in-out infinite;
+}
+
+.cell.running .cell-exec-count::after {
+  content: '*';
+  color: #fbbc04;
+}
+
+.cell.has-error {
+  border-color: #fad2cf;
+}
+
+.cell.has-error.selected {
+  border-left-color: #ea4335;
+}
+
+/* Markdown cell styling */
+.cell.markdown-cell {
+  background: #fafafa;
+}
+
+.cell.markdown-cell .cell-gutter {
+  background: #f5f5f5;
+}
+
+.cell.markdown-cell.selected {
+  border-left-color: #34a853;
+}
+
+/* Cell in edit mode */
+.cell.editing {
+  border-color: #1a73e8;
+}
+
+
+/* 7. Cell gutter (.cell-gutter)
+   ============================================================ */
+.cell-gutter {
+  width: 52px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 8px 4px;
+  background: #fafafa;
+  border-right: 1px solid #f0f0f0;
+  gap: 4px;
+}
+
+.cell-exec-count {
+  font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
+  font-size: 11px;
+  color: #5f6368;
+  line-height: 1.4;
+  min-width: 24px;
+  text-align: right;
+  padding: 2px;
+  white-space: nowrap;
+}
+
+.cell-exec-count::before {
+  content: '[';
+}
+
+.cell-exec-count::after {
+  content: ']';
+}
+
+.cell-exec-count.empty::before {
+  content: '';
+}
+
+.cell-exec-count.empty::after {
+  content: '';
+}
+
+.run-cell-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #5f6368;
+  font-size: 12px;
+  opacity: 0;
+  transition: background 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+  flex-shrink: 0;
+}
+
+.cell:hover .run-cell-btn {
+  opacity: 1;
+}
+
+.run-cell-btn:hover {
+  background: #e8f0fe;
+  color: #1a73e8;
+}
+
+.run-cell-btn:active {
+  background: #d2e3fc;
+}
+
+.run-cell-btn.running-state {
+  opacity: 1;
+  color: #fbbc04;
+  animation: spin 1s linear infinite;
+}
+
+/* Run button triangle icon */
+.run-icon {
+  display: inline-block;
+  width: 0;
+  height: 0;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 9px solid currentColor;
+  margin-left: 2px;
+}
+
+
+/* 8. Cell content (.cell-content)
+   ============================================================ */
+.cell-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.cell-editor {
+  min-height: 40px;
+  position: relative;
+}
+
+.cell-editor textarea {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: none;
+  outline: none;
+  resize: none;
+  font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
+  font-size: 14px;
+  color: #202124;
+  background: transparent;
+  line-height: 1.5;
+}
+
+/* Markdown rendered view */
+.cell-markdown-view {
+  padding: 8px 12px;
+  min-height: 40px;
+  color: #202124;
+  line-height: 1.6;
+}
+
+.cell-markdown-view h1,
+.cell-markdown-view h2,
+.cell-markdown-view h3,
+.cell-markdown-view h4,
+.cell-markdown-view h5,
+.cell-markdown-view h6 {
+  margin-top: 16px;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #202124;
+}
+
+.cell-markdown-view h1 { font-size: 1.8em; }
+.cell-markdown-view h2 { font-size: 1.4em; }
+.cell-markdown-view h3 { font-size: 1.2em; }
+
+.cell-markdown-view p {
+  margin: 8px 0;
+}
+
+.cell-markdown-view code {
+  font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
+  font-size: 0.9em;
+  background: #f1f3f4;
+  padding: 2px 4px;
+  border-radius: 3px;
+  color: #c7254e;
+}
+
+.cell-markdown-view pre {
+  background: #f1f3f4;
+  padding: 12px;
+  border-radius: 4px;
+  overflow-x: auto;
+}
+
+.cell-markdown-view pre code {
+  background: none;
+  padding: 0;
+  color: inherit;
+}
+
+.cell-markdown-view blockquote {
+  margin: 8px 0;
+  padding: 8px 16px;
+  border-left: 4px solid #e0e0e0;
+  color: #5f6368;
+}
+
+.cell-markdown-view ul,
+.cell-markdown-view ol {
+  margin: 8px 0;
+  padding-left: 24px;
+}
+
+.cell-markdown-view li {
+  margin: 4px 0;
+}
+
+.cell-markdown-view table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 8px 0;
+}
+
+.cell-markdown-view th,
+.cell-markdown-view td {
+  border: 1px solid #e0e0e0;
+  padding: 6px 12px;
+  text-align: left;
+}
+
+.cell-markdown-view th {
+  background: #f1f3f4;
+  font-weight: 600;
+}
+
+.cell-markdown-view tr:nth-child(even) td {
+  background: #f8f9fa;
+}
+
+/* Cell output */
+.cell-output {
+  padding: 8px 12px;
+  background: #f8f9fa;
+  border-top: 1px solid #e8e8e8;
+  font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-x: auto;
+  word-break: break-word;
+}
+
+.cell-output.empty {
+  display: none;
+}
+
+.cell-output.has-error {
+  border-left: 3px solid #ea4335;
+  background: #fff8f7;
+}
+
+
+/* 9. Cell actions (.cell-actions)
+   ============================================================ */
+.cell-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 4px 2px;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  flex-shrink: 0;
+}
+
+.cell:hover .cell-actions {
+  opacity: 1;
+}
+
+.cell-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #5f6368;
+  font-size: 14px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.cell-action-btn:hover {
+  background: #f1f3f4;
+  color: #202124;
+}
+
+.cell-action-btn.delete-btn:hover {
+  background: #fce8e6;
+  color: #ea4335;
+}
+
+.cell-action-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+
+/* 10. CodeMirror overrides
+   ============================================================ */
+.CodeMirror {
+  height: auto;
+  min-height: 40px;
+  font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #202124;
+  background: transparent;
+}
+
+.CodeMirror-scroll {
+  min-height: 40px;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.CodeMirror-lines {
+  padding: 8px 0;
+}
+
+.CodeMirror pre.CodeMirror-line,
+.CodeMirror pre.CodeMirror-line-like {
+  padding: 0 12px;
+}
+
+.CodeMirror-gutters {
+  background: transparent;
+  border-right: none;
+}
+
+.CodeMirror-focused .CodeMirror-cursor {
+  border-left-color: #1a73e8;
+}
+
+.CodeMirror-selected {
+  background: #d2e3fc !important;
+}
+
+/* Ensure CodeMirror fills its container */
+.cell-editor .CodeMirror {
+  width: 100%;
+}
+
+
+/* 11. Output types
+   ============================================================ */
+.output-stream {
+  white-space: pre-wrap;
+  word-break: break-all;
+  margin: 0;
+  padding: 0;
+}
+
+.output-stdout {
+  color: #202124;
+}
+
+.output-stderr {
+  color: #856404;
+  background: #fff8e1;
+  padding: 4px 8px;
+  border-radius: 3px;
+  border-left: 3px solid #fbbc04;
+  margin: 4px 0;
+  white-space: pre-wrap;
+}
+
+.output-error {
+  background: #fce8e6;
+  color: #c5221f;
+  padding: 8px;
+  border-radius: 4px;
+  border-left: 3px solid #ea4335;
+  margin: 4px 0;
+  white-space: pre-wrap;
+  font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
+}
+
+.output-error .error-name {
+  font-weight: 700;
+  color: #ea4335;
+}
+
+.output-error .error-value {
+  margin-top: 4px;
+  color: #c5221f;
+}
+
+.output-error .error-traceback {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #5f6368;
+  border-top: 1px solid #fad2cf;
+  padding-top: 8px;
+}
+
+.output-result {
+  color: #202124;
+  white-space: pre-wrap;
+}
+
+.output-html {
+  overflow-x: auto;
+}
+
+.output-image {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 4px 0;
+}
+
+.output-svg {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* Rich output container */
+.output-display-data {
+  margin: 4px 0;
+}
+
+/* Text representation fallback */
+.output-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+
+/* 12. Variables panel (#variables-panel)
+   ============================================================ */
+#variables-panel {
+  position: fixed;
+  right: 0;
+  top: 100px;
+  bottom: 0;
+  width: 320px;
+  background: #ffffff;
+  border-left: 1px solid #e0e0e0;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: transform 0.25s ease;
+}
+
+#variables-panel.hidden {
+  display: none;
+}
+
+.vars-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e0e0e0;
+  font-weight: 500;
+  font-size: 14px;
+  color: #202124;
+  flex-shrink: 0;
+}
+
+.vars-panel-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: #5f6368;
+  transition: background 0.15s ease;
+}
+
+.vars-panel-close:hover {
+  background: #f1f3f4;
+  color: #202124;
+}
+
+.vars-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.vars-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.vars-table th {
+  background: #f1f3f4;
+  padding: 6px 8px;
+  text-align: left;
+  font-weight: 600;
+  color: #5f6368;
+  border-bottom: 1px solid #e0e0e0;
+  position: sticky;
+  top: 0;
+}
+
+.vars-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #f0f0f0;
+  vertical-align: top;
+  word-break: break-all;
+}
+
+.vars-table tr:hover td {
+  background: #f8f9fa;
+}
+
+.vars-table .var-name {
+  font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
+  color: #202124;
+  font-weight: 500;
+}
+
+.vars-table .var-type {
+  color: #1a73e8;
+  font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
+}
+
+.vars-table .var-value {
+  color: #5f6368;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vars-empty {
+  text-align: center;
+  color: #9aa0a6;
+  padding: 32px 16px;
+  font-size: 13px;
+}
+
+
+/* 13. Notification (#notification)
+   ============================================================ */
+#notification {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(0);
+  background: #3c4043;
+  color: #ffffff;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  z-index: 1000;
+  pointer-events: none;
+  opacity: 1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  white-space: nowrap;
+  max-width: calc(100vw - 48px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#notification.hidden {
+  opacity: 0;
+  transform: translateX(-50%) translateY(8px);
+  pointer-events: none;
+}
+
+#notification.success {
+  background: #34a853;
+}
+
+#notification.error {
+  background: #ea4335;
+}
+
+#notification.warning {
+  background: #fbbc04;
+  color: #202124;
+}
+
+
+/* 14. Responsive — media queries
+   ============================================================ */
+@media (max-width: 960px) {
+  #cells-container {
+    max-width: 100%;
+    padding: 12px 0;
+  }
+
+  #variables-panel {
+    width: 280px;
+  }
+}
+
+@media (max-width: 768px) {
+  #notebook-header {
+    padding: 6px 12px;
+    min-height: 48px;
+  }
+
+  #notebook-header h1 {
+    font-size: 15px;
+    max-width: 200px;
+  }
+
+  #toolbar {
+    top: 48px;
+    padding: 4px 8px;
+    gap: 1px;
+  }
+
+  .toolbar-btn {
+    padding: 5px 7px;
+    font-size: 12px;
+  }
+
+  .toolbar-btn .btn-label {
+    display: none;
+  }
+
+  .cell-gutter {
+    width: 40px;
+  }
+
+  .cell-exec-count {
+    font-size: 10px;
+  }
+
+  #variables-panel {
+    width: 100%;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 50vh;
+    border-left: none;
+    border-top: 1px solid #e0e0e0;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+  }
+}
+
+@media (max-width: 480px) {
+  #notebook-header h1 {
+    font-size: 14px;
+    max-width: 140px;
+  }
+
+  .header-info {
+    display: none;
+  }
+
+  .cell {
+    border-radius: 4px;
+    margin: 0 2px;
+  }
+
+  #notification {
+    bottom: 12px;
+    padding: 8px 16px;
+    font-size: 12px;
+  }
+}
+
+
+/* 15. Animations
+   ============================================================ */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+@keyframes pulse-gutter {
+  0%, 100% {
+    background: #fafafa;
+  }
+  50% {
+    background: #fff8e1;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes slide-in-down {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Used when inserting a new cell */
+.cell-enter {
+  animation: slide-in-down 0.2s ease;
+}
+
+
+/* Misc utility
+   ============================================================ */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Scrollbar styling for output areas */
+.cell-output::-webkit-scrollbar,
+.vars-panel-body::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.cell-output::-webkit-scrollbar-track,
+.vars-panel-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.cell-output::-webkit-scrollbar-thumb,
+.vars-panel-body::-webkit-scrollbar-thumb {
+  background: #dadce0;
+  border-radius: 3px;
+}
+
+.cell-output::-webkit-scrollbar-thumb:hover,
+.vars-panel-body::-webkit-scrollbar-thumb:hover {
+  background: #bdc1c6;
+}

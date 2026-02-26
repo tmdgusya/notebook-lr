@@ -939,7 +939,7 @@ def web(path: str):
             nb = None
         launch_web(nb)
     except ImportError:
-        console.print("[red]Web interface requires gradio. Install with: pip install gradio[/red]")
+        console.print("[red]Web interface requires flask. Install with: pip install flask[/red]")
         sys.exit(1)
 
 
