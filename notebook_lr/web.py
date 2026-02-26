@@ -513,7 +513,18 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
             outputs=[cell_info_display, code_input, output_display, error_display, md_preview],
         )
 
-    demo.launch(share=share, theme=gr.themes.Soft(), css=custom_css)
+    # Temporarily clear sys.ps1 so Gradio doesn't think we're in an
+    # interactive REPL (IPython's InteractiveShell sets sys.ps1).
+    # Without this, Gradio skips thread blocking and the server exits.
+    _ps1 = getattr(sys, "ps1", None)
+    _had_ps1 = hasattr(sys, "ps1")
+    if _had_ps1:
+        del sys.ps1
+    try:
+        demo.launch(share=share, inline=False, theme=gr.themes.Soft(), css=custom_css)
+    finally:
+        if _had_ps1:
+            sys.ps1 = _ps1
 
 
 if __name__ == "__main__":

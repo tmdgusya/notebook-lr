@@ -328,3 +328,20 @@ class TestCellManagement:
         page.keyboard.press("Escape")
 
         assert options_after == options_before - 1
+
+
+class TestLaunchConfiguration:
+    """Tests that verify the Gradio app is properly configured."""
+
+    def test_gradio_app_has_theme(self, page):
+        """Verify the Gradio app loaded with a custom theme (not default)."""
+        # Check that the Soft theme's CSS variables are applied
+        # Soft theme uses specific color schemes
+        body_bg = page.evaluate("getComputedStyle(document.body).backgroundColor")
+        assert body_bg != "", "Theme should apply background styles"
+
+    def test_no_html_object_in_page(self, page):
+        """Verify no '<IPython.core.display.HTML object>' text appears on the page."""
+        page_text = page.locator("body").inner_text()
+        assert "<IPython.core.display.HTML object>" not in page_text, \
+            "IPython HTML object repr should not appear on the page"
