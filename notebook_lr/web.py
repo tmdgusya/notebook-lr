@@ -192,16 +192,20 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
             get_notebook_info(),
         )
 
-    def add_cell(cell_type: str, position: str):
-        """Add a new cell."""
+    def add_cell(cell_index_str, cell_type: str):
+        """Add a new cell directly after the currently selected cell."""
         ct = CellType.CODE if cell_type == "code" else CellType.MARKDOWN
         cell = Cell(type=ct, source="")
-        if position == "end":
-            notebook.add_cell(cell)
-            new_idx = len(notebook.cells) - 1
-        else:
-            notebook.insert_cell(0, cell)
-            new_idx = 0
+
+        # Insert after the currently selected cell (Google Colab style)
+        new_idx = len(notebook.cells)  # default: end (when nothing selected)
+        try:
+            idx = int(cell_index_str.split(":")[0])
+            new_idx = idx + 1
+        except (ValueError, IndexError, TypeError, AttributeError):
+            pass
+
+        notebook.insert_cell(new_idx, cell)
         return dropdown_update(new_idx), get_notebook_info()
 
     def delete_cell(cell_index_str):
@@ -442,12 +446,14 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
         )
 
         add_code_btn.click(
-            lambda: add_cell("code", "end"),
+            lambda cell_idx: add_cell(cell_idx, "code"),
+            inputs=[cell_list],
             outputs=[cell_list, notebook_info],
         )
 
         add_md_btn.click(
-            lambda: add_cell("markdown", "end"),
+            lambda cell_idx: add_cell(cell_idx, "markdown"),
+            inputs=[cell_list],
             outputs=[cell_list, notebook_info],
         )
 
