@@ -55,6 +55,20 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
             choices.append(f"{i}: {type_label} {exec_count}{status} | {preview}")
         return choices
 
+    def dropdown_update(selected_idx=None):
+        """Return a gr.update() for the cell_list dropdown with both choices and value.
+
+        When choices change (after execute, add, delete, move), the dropdown value
+        must also be updated to match the new choices list. Otherwise Gradio raises
+        an error because the old value string is no longer in the new choices.
+        """
+        choices = get_cell_choices()
+        if not choices:
+            return gr.update(choices=choices, value=None)
+        if selected_idx is not None and 0 <= selected_idx < len(choices):
+            return gr.update(choices=choices, value=choices[selected_idx])
+        return gr.update(choices=choices, value=choices[0])
+
     def get_notebook_info():
         """Get notebook info string."""
         name = notebook.metadata.get("name", "Untitled")
@@ -68,37 +82,53 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
             f"{executed} executed"
         )
 
-    def select_cell(evt: gr.SelectData):
-        """Handle cell selection."""
-        idx = evt.index
-        if idx < len(notebook.cells):
-            cell = notebook.cells[idx]
-            cell_info = f"{'Code' if cell.type == CellType.CODE else 'Markdown'} Cell #{idx}"
-            if cell.execution_count:
-                cell_info += f" (executed: [{cell.execution_count}])"
+    def select_cell(cell_value):
+        """Handle cell selection from dropdown .change event.
 
-            output_text = ""
-            error_text = ""
-            for output in cell.outputs:
-                text = format_output(output)
-                if output.get("type") == "error":
-                    error_text += text + "\n"
-                else:
-                    output_text += text + "\n"
+        Takes the dropdown string value (e.g. "0: Code [ ] | print('hello world')")
+        and populates the editor, cell info, and output areas.
 
-            # For markdown cells, show rendered preview
-            md_preview = ""
-            if cell.type == CellType.MARKDOWN and cell.source.strip():
-                md_preview = cell.source
+        Note: Setting code_input here triggers code_input.change -> update_cell_source
+        -> cell_list choices update. Gradio 6.x suppresses cascading .change events
+        from programmatic updates, preventing infinite loops.
+        """
+        if not cell_value:
+            return "", "", "", "", ""
 
-            return (
-                cell_info,
-                cell.source,
-                output_text.strip(),
-                error_text.strip(),
-                md_preview,
-            )
-        return "", "", "", "", ""
+        try:
+            idx = int(cell_value.split(":")[0])
+        except (ValueError, IndexError):
+            return "", "", "", "", ""
+
+        if idx >= len(notebook.cells):
+            return "", "", "", "", ""
+
+        cell = notebook.cells[idx]
+        cell_info = f"{'Code' if cell.type == CellType.CODE else 'Markdown'} Cell #{idx}"
+        if cell.execution_count:
+            cell_info += f" (executed: [{cell.execution_count}])"
+
+        output_text = ""
+        error_text = ""
+        for output in cell.outputs:
+            text = format_output(output)
+            if output.get("type") == "error":
+                error_text += text + "\n"
+            else:
+                output_text += text + "\n"
+
+        # For markdown cells, show rendered preview
+        md_preview = ""
+        if cell.type == CellType.MARKDOWN and cell.source.strip():
+            md_preview = cell.source
+
+        return (
+            cell_info,
+            cell.source,
+            output_text.strip(),
+            error_text.strip(),
+            md_preview,
+        )
 
     def execute_cell(cell_index_str, code):
         """Execute a single cell and return results."""
@@ -106,16 +136,16 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
         try:
             cell_index = int(cell_index_str.split(":")[0])
         except (ValueError, IndexError):
-            return "Select a cell first", "", get_cell_choices(), get_notebook_info()
+            return "Select a cell first", "", dropdown_update(), get_notebook_info()
 
         if cell_index >= len(notebook.cells):
-            return "Cell not found", "", get_cell_choices(), get_notebook_info()
+            return "Cell not found", "", dropdown_update(), get_notebook_info()
 
         cell = notebook.cells[cell_index]
         cell.source = code
 
         if cell.type == CellType.MARKDOWN:
-            return "", "", get_cell_choices(), get_notebook_info()
+            return "", "", dropdown_update(cell_index), get_notebook_info()
 
         result = kernel.execute_cell(code)
         cell.outputs = result.outputs
@@ -133,7 +163,7 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
         return (
             output_text.strip(),
             error_text.strip(),
-            get_cell_choices(),
+            dropdown_update(cell_index),
             get_notebook_info(),
         )
 
@@ -158,7 +188,7 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
 
         return (
             "\n\n".join(results),
-            get_cell_choices(),
+            dropdown_update(),
             get_notebook_info(),
         )
 
@@ -168,9 +198,11 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
         cell = Cell(type=ct, source="")
         if position == "end":
             notebook.add_cell(cell)
+            new_idx = len(notebook.cells) - 1
         else:
             notebook.insert_cell(0, cell)
-        return get_cell_choices(), get_notebook_info()
+            new_idx = 0
+        return dropdown_update(new_idx), get_notebook_info()
 
     def delete_cell(cell_index_str):
         """Delete a cell."""
@@ -180,10 +212,11 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
                 notebook.remove_cell(idx)
         except (ValueError, IndexError):
             pass
-        return get_cell_choices(), get_notebook_info()
+        return dropdown_update(), get_notebook_info()
 
     def move_cell_up(cell_index_str):
         """Move selected cell up."""
+        new_idx = 0
         try:
             idx = int(cell_index_str.split(":")[0])
             if 0 < idx < len(notebook.cells):
@@ -191,12 +224,14 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
                     notebook.cells[idx - 1],
                     notebook.cells[idx],
                 )
+                new_idx = idx - 1
         except (ValueError, IndexError):
             pass
-        return get_cell_choices(), get_notebook_info()
+        return dropdown_update(new_idx), get_notebook_info()
 
     def move_cell_down(cell_index_str):
         """Move selected cell down."""
+        new_idx = 0
         try:
             idx = int(cell_index_str.split(":")[0])
             if 0 <= idx < len(notebook.cells) - 1:
@@ -204,19 +239,21 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
                     notebook.cells[idx + 1],
                     notebook.cells[idx],
                 )
+                new_idx = idx + 1
         except (ValueError, IndexError):
             pass
-        return get_cell_choices(), get_notebook_info()
+        return dropdown_update(new_idx), get_notebook_info()
 
     def update_cell_source(cell_index_str, code):
         """Update a cell's source when editor changes."""
+        idx = None
         try:
             idx = int(cell_index_str.split(":")[0])
             if 0 <= idx < len(notebook.cells):
                 notebook.cells[idx].source = code
-        except (ValueError, IndexError):
+        except (ValueError, IndexError, TypeError):
             pass
-        return get_cell_choices()
+        return dropdown_update(idx)
 
     def save_notebook(include_session: bool):
         """Save notebook to file."""
@@ -241,11 +278,11 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
             notebook = Notebook.load(Path(file_path.name))
             notebook.metadata["path"] = file_path.name
             return (
-                get_cell_choices(),
+                dropdown_update(),
                 f"Loaded {file_path.name}",
                 get_notebook_info(),
             )
-        return get_cell_choices(), "No file selected", get_notebook_info()
+        return dropdown_update(), "No file selected", get_notebook_info()
 
     def get_variables():
         """Get all variables in namespace."""
@@ -277,8 +314,6 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
 
     with gr.Blocks(
         title="notebook-lr",
-        theme=gr.themes.Soft(),
-        css=custom_css,
     ) as demo:
         gr.Markdown("# notebook-lr")
         notebook_info = gr.Markdown(get_notebook_info())
@@ -287,8 +322,10 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
             # Left sidebar - cell list and operations
             with gr.Column(scale=1, min_width=280):
                 gr.Markdown("### Cells")
+                initial_choices = get_cell_choices()
                 cell_list = gr.Dropdown(
-                    choices=get_cell_choices(),
+                    choices=initial_choices,
+                    value=initial_choices[0] if initial_choices else None,
                     label="Select Cell",
                     interactive=True,
                 )
@@ -385,8 +422,11 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
             )
 
         # Event handlers
-        cell_list.select(
+        # Use .change instead of .select for reliable Playwright automation
+        # and programmatic triggering (e.g., demo.load auto-select)
+        cell_list.change(
             select_cell,
+            inputs=[cell_list],
             outputs=[cell_info_display, code_input, output_display, error_display, md_preview],
         )
 
@@ -461,7 +501,19 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
             outputs=vars_display,
         )
 
-    demo.launch(share=share)
+        # Auto-select first cell on page load
+        def initial_load():
+            """Select the first cell when the page loads."""
+            if not notebook.cells:
+                return "", "", "", "", ""
+            return select_cell(get_cell_choices()[0])
+
+        demo.load(
+            initial_load,
+            outputs=[cell_info_display, code_input, output_display, error_display, md_preview],
+        )
+
+    demo.launch(share=share, theme=gr.themes.Soft(), css=custom_css)
 
 
 if __name__ == "__main__":
