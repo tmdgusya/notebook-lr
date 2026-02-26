@@ -925,12 +925,18 @@ def sessions():
 
 
 @main.command()
-@click.argument("path", type=click.Path(exists=True))
+@click.argument("path", type=click.Path(exists=True), required=False, default=None)
 def web(path: str):
-    """Launch web interface for a notebook."""
+    """Launch web interface for a notebook.
+
+    If PATH is given, opens that notebook. Otherwise starts with a new empty notebook.
+    """
     try:
         from notebook_lr.web import launch_web
-        nb = Notebook.load(Path(path))
+        if path:
+            nb = Notebook.load(Path(path))
+        else:
+            nb = None
         launch_web(nb)
     except ImportError:
         console.print("[red]Web interface requires gradio. Install with: pip install gradio[/red]")
