@@ -2,8 +2,6 @@
 NotebookKernel: Persistent IPython kernel that maintains execution state.
 """
 
-import sys
-from io import StringIO
 from typing import Any, Optional
 from dataclasses import dataclass, field
 
@@ -120,40 +118,37 @@ class NotebookKernel:
         error = None
         return_value = None
 
-        # Capture outputs during execution
-        stdout_capture = StringIO()
-        stderr_capture = StringIO()
-
-        old_stdout = sys.stdout
-        old_stderr = sys.stderr
-
         try:
-            sys.stdout = stdout_capture
-            sys.stderr = stderr_capture
+            with capture_output() as captured:
+                result = self.ip.run_cell(code, silent=False)
 
-            # Run the code in the persistent namespace
-            result = self.ip.run_cell(code, silent=False)
-
-            # Get stdout/stderr
-            stdout_val = stdout_capture.getvalue()
-            stderr_val = stderr_capture.getvalue()
-
-            if stdout_val:
+            if captured.stdout:
                 outputs.append({
                     "type": "stream",
                     "name": "stdout",
-                    "text": stdout_val,
+                    "text": captured.stdout,
                 })
 
-            if stderr_val:
+            if captured.stderr:
                 outputs.append({
                     "type": "stream",
                     "name": "stderr",
-                    "text": stderr_val,
+                    "text": captured.stderr,
+                })
+
+            # display() 호출로 생성된 출력 처리
+            for display_output in captured.outputs:
+                data = {}
+                if hasattr(display_output, 'data'):
+                    data = display_output.data
+                elif hasattr(display_output, '_repr_html_'):
+                    data = _build_mime_bundle(display_output)
+                outputs.append({
+                    "type": "display_data",
+                    "data": data,
                 })
 
             if result.success:
-                # Capture return value if any
                 if result.result is not None:
                     return_value = result.result
                     data = _build_mime_bundle(result.result)
@@ -163,14 +158,13 @@ class NotebookKernel:
                         "execution_count": self.execution_count,
                     })
             else:
-                # Capture error
                 if result.error_in_exec:
                     error = str(result.error_in_exec)
                     outputs.append({
                         "type": "error",
                         "ename": type(result.error_in_exec).__name__,
                         "evalue": str(result.error_in_exec),
-                        "traceback": self.ip.showsyntaxerror() if hasattr(self.ip, 'showsyntaxerror') else [],
+                        "traceback": [],
                     })
 
         except Exception as e:
@@ -181,11 +175,7 @@ class NotebookKernel:
                 "evalue": str(e),
                 "traceback": [],
             })
-        finally:
-            sys.stdout = old_stdout
-            sys.stderr = old_stderr
 
-        # Create result
         exec_result = ExecutionResult(
             success=error is None,
             outputs=outputs,
@@ -194,7 +184,6 @@ class NotebookKernel:
             return_value=return_value,
         )
 
-        # Add to history
         self._history.append((self.execution_count, code, exec_result))
 
         return exec_result

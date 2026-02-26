@@ -144,6 +144,17 @@ class TestNotebookKernel:
         assert "a" in names
         assert "b" in names
 
+    def test_expression_output_after_assignment(self):
+        """cell[1]에서 x=1 후 cell[2]에서 x를 평가하면 출력이 나와야 함."""
+        self.kernel.execute_cell("x = 1")
+        result = self.kernel.execute_cell("x")
+        assert result.success
+        assert result.return_value == 1
+        # execute_result 출력이 존재해야 함
+        exec_results = [o for o in result.outputs if o["type"] == "execute_result"]
+        assert len(exec_results) > 0
+        assert exec_results[0]["data"]["text/plain"] == "1"
+
     def test_multiline_code(self):
         """Test executing multiline code."""
         code = """
