@@ -11,6 +11,44 @@ from IPython.core.interactiveshell import InteractiveShell
 from IPython.utils.capture import capture_output
 
 
+def _build_mime_bundle(obj) -> dict:
+    """
+    Build a MIME bundle dictionary from an object.
+
+    Checks for IPython rich display methods and builds a dict
+    mapping MIME types to their representations. For display objects
+    that have a primary content attribute (e.g. HTML.data), use that
+    as the text/plain fallback instead of repr().
+    """
+    rich_content = None
+
+    rich_entries = []
+    for mime_type, method_name in [
+        ("text/html", "_repr_html_"),
+        ("text/markdown", "_repr_markdown_"),
+        ("application/json", "_repr_json_"),
+        ("text/latex", "_repr_latex_"),
+        ("image/svg+xml", "_repr_svg_"),
+        ("image/png", "_repr_png_"),
+    ]:
+        method = getattr(obj, method_name, None)
+        if callable(method):
+            value = method()
+            if value is not None:
+                rich_entries.append((mime_type, value))
+                if rich_content is None:
+                    rich_content = value
+
+    # Use the primary rich content as text/plain if available,
+    # otherwise fall back to repr(). This avoids "<IPython...object>" strings.
+    plain = rich_content if rich_content is not None else repr(obj)
+    data = {"text/plain": plain}
+    for mime_type, value in rich_entries:
+        data[mime_type] = value
+
+    return data
+
+
 @dataclass
 class ExecutionResult:
     """Result of executing a code cell."""
@@ -118,9 +156,10 @@ class NotebookKernel:
                 # Capture return value if any
                 if result.result is not None:
                     return_value = result.result
+                    data = _build_mime_bundle(result.result)
                     outputs.append({
                         "type": "execute_result",
-                        "data": {"text/plain": str(result.result)},
+                        "data": data,
                         "execution_count": self.execution_count,
                     })
             else:

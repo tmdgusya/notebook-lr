@@ -158,6 +158,95 @@ message = greet("World")
         assert self.kernel.get_variable("message") == "Hello, World!"
 
 
+class TestDisplayObjects:
+    """Tests for IPython display object handling (HTML, Markdown, JSON, etc.).
+
+    These tests document the expected behaviour: display objects should produce
+    rich MIME-type data dicts rather than repr strings like
+    '<IPython.core.display.HTML object>'.
+    """
+
+    def setup_method(self):
+        """Set up a fresh kernel for each test."""
+        self.kernel = NotebookKernel()
+        self.kernel.reset()
+
+    def _execute_result_outputs(self, result):
+        return [o for o in result.outputs if o.get("type") == "execute_result"]
+
+    def test_html_display_object_has_html_mime_type(self):
+        """HTML() should produce a text/html key in the output data dict."""
+        result = self.kernel.execute_cell(
+            'from IPython.display import HTML\nHTML("<h1>Test</h1>")'
+        )
+        assert result.success
+        exec_results = self._execute_result_outputs(result)
+        assert len(exec_results) > 0, "Expected an execute_result output"
+        data = exec_results[0]["data"]
+        assert "text/html" in data, (
+            f"Expected 'text/html' key in data dict, got keys: {list(data.keys())}"
+        )
+        assert "<h1>Test</h1>" in data["text/html"], (
+            f"Expected actual HTML content in text/html, got: {data['text/html']!r}"
+        )
+
+    def test_html_display_object_not_repr_string(self):
+        """Output text/plain must NOT be the IPython repr string."""
+        result = self.kernel.execute_cell(
+            'from IPython.display import HTML\nHTML("<h1>Test</h1>")'
+        )
+        assert result.success
+        exec_results = self._execute_result_outputs(result)
+        assert len(exec_results) > 0
+        data = exec_results[0]["data"]
+        plain = data.get("text/plain", "")
+        assert "<IPython.core.display.HTML object>" not in plain, (
+            "text/plain must not be the repr string of the display object"
+        )
+
+    def test_markdown_display_object(self):
+        """Markdown() should produce a text/markdown key in the output data."""
+        result = self.kernel.execute_cell(
+            'from IPython.display import Markdown\nMarkdown("**bold**")'
+        )
+        assert result.success
+        exec_results = self._execute_result_outputs(result)
+        assert len(exec_results) > 0, "Expected an execute_result output"
+        data = exec_results[0]["data"]
+        assert "text/markdown" in data, (
+            f"Expected 'text/markdown' key in data dict, got keys: {list(data.keys())}"
+        )
+        assert "**bold**" in data["text/markdown"]
+
+    def test_json_display_object(self):
+        """JSON() should produce an application/json key in the output data."""
+        result = self.kernel.execute_cell(
+            'from IPython.display import JSON\nJSON({"key": "value"})'
+        )
+        assert result.success
+        exec_results = self._execute_result_outputs(result)
+        assert len(exec_results) > 0, "Expected an execute_result output"
+        data = exec_results[0]["data"]
+        assert "application/json" in data, (
+            f"Expected 'application/json' key in data dict, got keys: {list(data.keys())}"
+        )
+
+    def test_display_object_has_plain_fallback(self):
+        """Display objects should also expose text/plain as a fallback."""
+        result = self.kernel.execute_cell(
+            'from IPython.display import HTML\nHTML("<b>hello</b>")'
+        )
+        assert result.success
+        exec_results = self._execute_result_outputs(result)
+        assert len(exec_results) > 0
+        data = exec_results[0]["data"]
+        # text/plain must exist and not be the ugly repr
+        assert "text/plain" in data, "Expected text/plain fallback in data dict"
+        assert "<IPython.core.display.HTML object>" not in data["text/plain"], (
+            "text/plain fallback must not be the repr string"
+        )
+
+
 class TestExecutionResult:
     """Test cases for ExecutionResult."""
 

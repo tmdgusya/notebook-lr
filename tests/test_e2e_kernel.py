@@ -612,7 +612,105 @@ class TestOutputCaptureE2E:
 
 
 # ---------------------------------------------------------------------------
-# 6. Error Handling
+# 6. Display Objects (IPython rich output)
+# ---------------------------------------------------------------------------
+
+class TestDisplayObjectsE2E:
+    """Full-pipeline tests for IPython display objects (HTML, Markdown, etc.).
+
+    The kernel must extract MIME-type data dicts from display objects rather
+    than falling back to str(obj) which produces unhelpful repr strings.
+    """
+
+    def setup_method(self):
+        self.kernel = NotebookKernel()
+        self.kernel.reset()
+
+    def test_html_object_produces_html_mime_type(self):
+        """Full pipeline: HTML() → execute_result with text/html data."""
+        result = self.kernel.execute_cell(
+            'from IPython.display import HTML\nHTML("<h1>Hello</h1>")'
+        )
+        assert result.success
+        exec_results = _execute_result_outputs(result)
+        assert len(exec_results) > 0, "No execute_result output found"
+        data = exec_results[0]["data"]
+        assert "text/html" in data, (
+            f"Expected text/html in data, got: {list(data.keys())}"
+        )
+        assert "<h1>Hello</h1>" in data["text/html"]
+
+    def test_html_content_is_actual_html_not_repr(self):
+        """The data dict must contain actual HTML, not the object repr."""
+        result = self.kernel.execute_cell(
+            'from IPython.display import HTML\n'
+            'HTML("<p>Real content</p>")'
+        )
+        assert result.success
+        exec_results = _execute_result_outputs(result)
+        assert len(exec_results) > 0
+        data = exec_results[0]["data"]
+        # Check all values — none should be the repr string
+        for mime, content in data.items():
+            assert "<IPython.core.display.HTML object>" not in str(content), (
+                f"MIME type {mime!r} contains repr string instead of real content"
+            )
+        # Actual HTML must appear somewhere
+        html_found = any("<p>Real content</p>" in str(v) for v in data.values())
+        assert html_found, f"HTML content not found in data dict: {data}"
+
+    def test_mixed_print_and_html_display(self):
+        """Cell with print() and HTML() should produce both stream and execute_result."""
+        result = self.kernel.execute_cell(
+            'from IPython.display import HTML\n'
+            'print("printed line")\n'
+            'HTML("<em>italic</em>")'
+        )
+        assert result.success
+        # stdout must be captured
+        assert "printed line" in _stdout_text(result)
+        # execute_result must have text/html
+        exec_results = _execute_result_outputs(result)
+        assert len(exec_results) > 0, "Expected execute_result for HTML()"
+        data = exec_results[0]["data"]
+        assert "text/html" in data, (
+            f"Expected text/html key, got: {list(data.keys())}"
+        )
+
+    def test_multiple_mime_types_in_data_dict(self):
+        """The data dict for a display object should carry multiple MIME types."""
+        result = self.kernel.execute_cell(
+            'from IPython.display import HTML\nHTML("<div>multi</div>")'
+        )
+        assert result.success
+        exec_results = _execute_result_outputs(result)
+        assert len(exec_results) > 0
+        data = exec_results[0]["data"]
+        # Must have at least text/html AND text/plain
+        assert "text/html" in data, "Missing text/html"
+        assert "text/plain" in data, "Missing text/plain fallback"
+        # text/plain must not be the ugly repr
+        assert "<IPython.core.display.HTML object>" not in data["text/plain"]
+
+    def test_display_object_with_variable_persistence(self):
+        """An HTML object stored in a variable in cell 1 can be returned in cell 2."""
+        self.kernel.execute_cell(
+            'from IPython.display import HTML\n'
+            'banner = HTML("<h2>Banner</h2>")'
+        )
+        result = self.kernel.execute_cell("banner")
+        assert result.success
+        exec_results = _execute_result_outputs(result)
+        assert len(exec_results) > 0, "Expected execute_result when returning stored HTML"
+        data = exec_results[0]["data"]
+        assert "text/html" in data, (
+            f"Expected text/html for stored HTML variable, got: {list(data.keys())}"
+        )
+        assert "<h2>Banner</h2>" in data["text/html"]
+
+
+# ---------------------------------------------------------------------------
+# 7. Error Handling
 # ---------------------------------------------------------------------------
 
 class TestErrorHandlingE2E:

@@ -27,6 +27,15 @@ def format_output(output: dict[str, Any]) -> str:
 
     elif output_type == "execute_result":
         data = output.get("data", {})
+        # Prefer rich types over plain text
+        if "text/html" in data:
+            return data["text/html"]
+        if "text/markdown" in data:
+            return data["text/markdown"]
+        if "application/json" in data:
+            import json
+            val = data["application/json"]
+            return json.dumps(val, indent=2) if not isinstance(val, str) else val
         return data.get("text/plain", "")
 
     elif output_type == "error":
@@ -36,6 +45,15 @@ def format_output(output: dict[str, Any]) -> str:
 
     elif output_type == "display_data":
         data = output.get("data", {})
+        # Prefer rich types over plain text
+        if "text/html" in data:
+            return data["text/html"]
+        if "text/markdown" in data:
+            return data["text/markdown"]
+        if "application/json" in data:
+            import json
+            val = data["application/json"]
+            return json.dumps(val, indent=2) if not isinstance(val, str) else val
         return data.get("text/plain", str(data))
 
     return str(output)
@@ -62,6 +80,19 @@ def format_rich_output(output: dict[str, Any]):
 
     elif output_type == "execute_result":
         data = output.get("data", {})
+        # Prefer rich types over plain text
+        if "text/html" in data:
+            return Text(data["text/html"], style="cyan")
+        if "text/markdown" in data:
+            return Text(data["text/markdown"], style="cyan")
+        if "application/json" in data:
+            import json
+            val = data["application/json"]
+            text = json.dumps(val, indent=2) if not isinstance(val, str) else val
+            try:
+                return Syntax(text, "json", theme="monokai", line_numbers=False)
+            except Exception:
+                return Text(text, style="cyan")
         text = data.get("text/plain", "")
         try:
             return Syntax(text, "python", theme="monokai", line_numbers=False)
@@ -84,6 +115,16 @@ def format_rich_output(output: dict[str, Any]):
 
     elif output_type == "display_data":
         data = output.get("data", {})
+        # Prefer rich types over plain text
+        if "text/html" in data:
+            return Text(data["text/html"], style="cyan")
+        if "text/markdown" in data:
+            return Text(data["text/markdown"], style="cyan")
+        if "application/json" in data:
+            import json
+            val = data["application/json"]
+            text = json.dumps(val, indent=2) if not isinstance(val, str) else val
+            return Text(text, style="cyan")
         return Text(data.get("text/plain", str(data)), style="cyan")
 
     return Text(str(output), style="dim")
