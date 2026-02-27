@@ -32,15 +32,27 @@
     </header>
 
     <div id="toolbar">
-      <button id="run-all-btn" class="toolbar-btn" title="Run All Cells">&#9654;&#9654; Run All</button>
+      <button id="run-all-btn" class="toolbar-btn toolbar-btn-primary" title="Run All Cells">
+        <span class="icon">&#9654;&#9654;</span> Run All
+      </button>
       <div class="toolbar-separator"></div>
-      <button id="save-btn" class="toolbar-btn" title="Save">Save</button>
-      <button id="save-session-btn" class="toolbar-btn" title="Save with Session">Save + Session</button>
-      <button id="load-btn" class="toolbar-btn" title="Load Notebook">Load</button>
+      <button id="save-btn" class="toolbar-btn" title="Save">
+        <span class="icon">&#128190;</span> Save
+      </button>
+      <button id="save-session-btn" class="toolbar-btn" title="Save with Session">
+        <span class="icon">&#128190;</span> Save + Session
+      </button>
+      <button id="load-btn" class="toolbar-btn" title="Load Notebook">
+        <span class="icon">&#128194;</span> Load
+      </button>
       <input type="file" id="load-file-input" accept=".nblr" hidden>
       <div class="toolbar-separator"></div>
-      <button id="vars-btn" class="toolbar-btn" title="Show Variables">{x} Variables</button>
-      <button id="clear-vars-btn" class="toolbar-btn toolbar-btn-danger" title="Clear All Variables">Clear Vars</button>
+      <button id="vars-btn" class="toolbar-btn" title="Show Variables">
+        <span class="icon">&#123;</span> Variables
+      </button>
+      <button id="clear-vars-btn" class="toolbar-btn toolbar-btn-danger" title="Clear All Variables">
+        <span class="icon">&#128465;</span> Clear Vars
+      </button>
     </div>
 
     <div id="cells-container">
