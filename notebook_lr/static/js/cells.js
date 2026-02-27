@@ -150,6 +150,12 @@ NB.cells = (function () {
 
     cellEditors[index] = cm;
 
+    // Refresh editor after a brief delay to ensure proper rendering
+    // This fixes the issue where content is only visible after clicking
+    setTimeout(function() {
+      cm.refresh();
+    }, 0);
+
     // Display existing outputs
     if (cell.outputs && cell.outputs.length > 0) {
       NB.execution.displayOutputs(outputEl, cell.outputs);
@@ -182,16 +188,18 @@ NB.cells = (function () {
   }
 
   function selectCell(index) {
-    // Remove selected from all cells
+    // Remove selected and editing from all cells
     const allCells = document.querySelectorAll('#cells-container .cell');
     allCells.forEach(function (el) {
       el.classList.remove('selected');
+      el.classList.remove('editing');
     });
 
     // Find and select target cell
     const target = document.querySelector('#cells-container .cell[data-index="' + index + '"]');
     if (target) {
       target.classList.add('selected');
+      target.classList.add('editing');
       selectedIndex = index;
 
       // Focus the editor
