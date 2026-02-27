@@ -55,52 +55,55 @@ button:focus-visible {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #f9f9f9;
-  border-bottom: 1px solid #e0e0e0;
-  padding: 0 16px;
-  height: 48px;
-  min-height: 48px;
+  background: #ffffff;
+  border-bottom: 1px solid #dadce0;
+  padding: 0 20px;
+  height: 56px;
+  min-height: 56px;
+  box-shadow: 0 1px 2px rgba(60, 64, 67, 0.1);
 }
 
 #notebook-header h1 {
   margin: 0;
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 400;
   color: #202124;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 400px;
-  letter-spacing: 0.01em;
+  letter-spacing: 0;
+  line-height: 1.4;
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   min-width: 0;
 }
 
-/* Colab-style orange accent bar before the title */
+/* Colab-style orange notebook icon */
 .header-left::before {
   content: '';
   display: block;
-  width: 24px;
-  height: 24px;
-  border-radius: 4px;
-  background: linear-gradient(135deg, #f9ab00 0%, #e37400 100%);
+  width: 32px;
+  height: 40px;
   flex-shrink: 0;
+  background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+  border-radius: 3px 3px 0 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 }
 
 .header-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   flex-shrink: 0;
 }
 
 #notebook-info {
-  font-size: 12px;
+  font-size: 13px;
   color: #5f6368;
   white-space: nowrap;
   overflow: hidden;
@@ -111,20 +114,21 @@ button:focus-visible {
 .header-info {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 12px;
+  gap: 12px;
+  font-size: 13px;
   color: #5f6368;
 }
 
 .kernel-status {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
+  gap: 6px;
+  padding: 4px 10px;
   border-radius: 12px;
   background: #f1f3f4;
   font-size: 12px;
   color: #5f6368;
+  font-weight: 500;
 }
 
 .kernel-status-dot {
@@ -145,8 +149,8 @@ button:focus-visible {
 }
 
 .notebook-logo {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 40px;
   flex-shrink: 0;
 }
 
@@ -155,16 +159,16 @@ button:focus-visible {
    ============================================================ */
 #toolbar {
   position: sticky;
-  top: 48px;
+  top: 56px;
   z-index: 90;
   display: flex;
   align-items: center;
-  gap: 1px;
-  background: #f9f9f9;
+  gap: 2px;
+  background: #ffffff;
   border-bottom: 1px solid #dadce0;
-  padding: 2px 16px;
-  height: 40px;
-  min-height: 40px;
+  padding: 4px 16px;
+  height: 44px;
+  min-height: 44px;
   flex-wrap: wrap;
 }
 
@@ -172,8 +176,8 @@ button:focus-visible {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  padding: 4px 12px;
+  gap: 6px;
+  padding: 6px 14px;
   border-radius: 4px;
   font-size: 13px;
   font-weight: 500;
@@ -181,9 +185,9 @@ button:focus-visible {
   background: transparent;
   border: none;
   cursor: pointer;
-  transition: background 0.1s ease, color 0.1s ease;
+  transition: background 0.15s ease, color 0.15s ease;
   white-space: nowrap;
-  min-height: 30px;
+  min-height: 32px;
   letter-spacing: 0.01em;
 }
 
@@ -205,10 +209,11 @@ button:focus-visible {
 
 .toolbar-btn-primary {
   color: #1a73e8;
+  background: #e8f0fe;
 }
 
 .toolbar-btn-primary:hover {
-  background: #e8f0fe;
+  background: #d2e3fc;
 }
 
 .toolbar-btn-danger {
@@ -224,7 +229,7 @@ button:focus-visible {
   width: 1px;
   height: 20px;
   background: #dadce0;
-  margin: 0 6px;
+  margin: 0 8px;
   flex-shrink: 0;
 }
 
@@ -275,6 +280,7 @@ button:focus-visible {
   justify-content: center;
   height: 28px;
   margin: 0;
+  padding-left: 51px;
   opacity: 0;
   transition: opacity 0.15s ease;
 }
@@ -299,7 +305,7 @@ button:focus-visible {
 
 .divider-line {
   position: absolute;
-  left: 48px;
+  left: 51px;
   right: 0;
   height: 1px;
   background: #dadce0;
@@ -360,27 +366,36 @@ button:focus-visible {
   flex-direction: row;
   align-items: stretch;
   background: #ffffff;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
-  margin: 0;
+  border: 1px solid transparent;
+  border-left: 2px solid transparent;
+  border-radius: 0;
+  margin: 0 0 8px 0;
   overflow: visible;
-  transition: border-color 0.1s ease, box-shadow 0.1s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
   position: relative;
 }
 
 .cell:hover {
-  border-color: #bdc1c6;
-  box-shadow: 0 1px 3px rgba(60, 64, 67, 0.15);
+  border-color: transparent;
+  border-left-color: #bdc1c6;
+  background: #fafafa;
+  box-shadow: none;
 }
 
 .cell.selected {
-  border-color: #1a73e8;
-  border-left: 3px solid #1a73e8;
-  box-shadow: 0 1px 3px rgba(26, 115, 232, 0.2);
+  border: 2px solid #1a73e8;
+  border-left-color: #1a73e8;
+  box-shadow: 0 2px 8px rgba(26, 115, 232, 0.15);
 }
 
 .cell.selected:hover {
   border-color: #1a73e8;
+  border-left-color: #1a73e8;
+}
+
+.cell.editing {
+  border-color: #1a73e8;
+  box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.2), 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .cell.running .cell-gutter {
@@ -394,15 +409,25 @@ button:focus-visible {
 }
 
 .cell.has-error {
-  border-color: #fad2cf;
+  border-color: transparent;
+  border-left-color: #ea4335;
 }
 
 .cell.has-error.selected {
   border-left-color: #ea4335;
-  border-color: #ea4335;
+  border-color: #fad2cf;
 }
 
-/* Markdown cell styling */
+/* Code cell styling - subtle light blue tint */
+.cell.code-cell {
+  background: #f8fbff;
+}
+
+.cell.code-cell .cell-gutter {
+  background: #f0f4f8;
+}
+
+/* Markdown cell styling - Colab uses white bg with green left border */
 .cell.markdown-cell {
   background: #ffffff;
 }
@@ -411,59 +436,48 @@ button:focus-visible {
   background: #ffffff;
 }
 
+.cell.markdown-cell:hover {
+  border-left-color: #34a853;
+}
+
 .cell.markdown-cell.selected {
   border-left-color: #34a853;
-  border-color: #34a853;
+  border-color: #dadce0;
 }
 
 /* Cell in edit mode */
 .cell.editing {
-  border-color: #1a73e8;
+  border-color: #dadce0;
+  border-left-color: #1a73e8;
 }
 
 
 /* 7. Cell gutter (.cell-gutter) — Colab-style play button + exec count
    ============================================================ */
 .cell-gutter {
-  width: 48px;
+  width: 60px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  padding: 6px 0;
+  padding: 8px 4px;
   background: #f7f7f7;
   border-right: none;
-  gap: 2px;
+  gap: 4px;
 }
 
 .cell-exec-count {
-  font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
-  font-size: 10px;
-  color: #80868b;
+  font-family: 'Roboto Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
+  font-size: 11px;
+  color: #5f6368;
   line-height: 1.4;
-  min-width: 20px;
+  min-width: 24px;
   text-align: center;
-  padding: 0;
+  padding: 0 2px;
   white-space: nowrap;
   user-select: none;
-}
-
-/* Remove the bracket pseudo-elements — the JS already wraps in [ ] */
-.cell-exec-count::before {
-  content: '';
-}
-
-.cell-exec-count::after {
-  content: '';
-}
-
-.cell-exec-count.empty::before {
-  content: '';
-}
-
-.cell-exec-count.empty::after {
-  content: '';
+  font-weight: 400;
 }
 
 /* Colab-style circular play button */
@@ -471,17 +485,18 @@ button:focus-visible {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background: transparent;
-  border: 1.5px solid #dadce0;
+  border: 1px solid #dadce0;
   cursor: pointer;
   color: #5f6368;
-  font-size: 13px;
-  transition: background 0.1s ease, color 0.1s ease, border-color 0.1s ease, opacity 0.15s ease;
+  font-size: 12px;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
   flex-shrink: 0;
   opacity: 0;
+  margin-top: 2px;
 }
 
 /* Show play button on cell hover */
@@ -502,7 +517,7 @@ button:focus-visible {
 
 .run-cell-btn:active {
   background: #d2e3fc;
-  border-color: #1a73e8;
+  border-color: #174ea6;
   color: #174ea6;
 }
 
@@ -513,15 +528,15 @@ button:focus-visible {
   animation: spin 1s linear infinite;
 }
 
-/* Run button triangle icon */
+/* Run button triangle icon - smaller and more Colab-like */
 .run-icon {
   display: inline-block;
   width: 0;
   height: 0;
-  border-top: 5px solid transparent;
-  border-bottom: 5px solid transparent;
-  border-left: 9px solid currentColor;
-  margin-left: 2px;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-left: 7px solid currentColor;
+  margin-left: 1px;
 }
 
 
@@ -535,9 +550,19 @@ button:focus-visible {
 }
 
 .cell-editor {
-  min-height: 36px;
+  min-height: 24px;
   position: relative;
-  background: #f7f7f7;
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 6px 0;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Selected cell: highlight the editor */
+.cell.selected .cell-editor {
+  border-color: #1a73e8;
+  box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.1);
 }
 
 /* Markdown cells: white editor background */
@@ -547,22 +572,23 @@ button:focus-visible {
 
 .cell-editor textarea {
   width: 100%;
-  min-height: 36px;
-  padding: 8px 12px;
+  min-height: 24px;
+  padding: 6px 12px;
   border: none;
   outline: none;
   resize: none;
-  font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
-  font-size: 14px;
+  font-family: 'Roboto Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
+  font-size: 13px;
   color: #202124;
   background: transparent;
   line-height: 1.5;
+  border-radius: 3px;
 }
 
 /* Markdown rendered view */
 .cell-markdown-view {
-  padding: 12px 16px;
-  min-height: 36px;
+  padding: 8px 12px;
+  min-height: 24px;
   color: #202124;
   line-height: 1.6;
 }
@@ -740,7 +766,7 @@ button:focus-visible {
    ============================================================ */
 .CodeMirror {
   height: auto;
-  min-height: 36px;
+  min-height: 220px;
   font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
   font-size: 14px;
   line-height: 1.5;
@@ -750,7 +776,7 @@ button:focus-visible {
 }
 
 .CodeMirror-scroll {
-  min-height: 36px;
+  min-height: 220px;
   overflow-x: auto;
   overflow-y: hidden;
 }
@@ -907,7 +933,7 @@ button:focus-visible {
 #variables-panel {
   position: fixed;
   right: 0;
-  top: 88px;
+  top: 100px;
   bottom: 0;
   width: 320px;
   background: #ffffff;
@@ -1122,23 +1148,29 @@ button:focus-visible {
 @media (max-width: 768px) {
   #notebook-header {
     padding: 0 12px;
-    height: 44px;
-    min-height: 44px;
+    height: 48px;
+    min-height: 48px;
   }
 
   #notebook-header h1 {
-    font-size: 15px;
+    font-size: 16px;
     max-width: 200px;
   }
 
+  .header-left::before {
+    width: 28px;
+    height: 36px;
+  }
+
   #toolbar {
-    top: 44px;
+    top: 48px;
     padding: 2px 8px;
     gap: 0;
+    height: 40px;
   }
 
   .toolbar-btn {
-    padding: 4px 6px;
+    padding: 4px 8px;
     font-size: 12px;
   }
 
@@ -1148,6 +1180,14 @@ button:focus-visible {
 
   .cell-gutter {
     width: 40px;
+  }
+
+  .add-cell-divider {
+    padding-left: 43px;
+  }
+
+  .divider-line {
+    left: 43px;
   }
 
   .run-cell-btn {
@@ -1179,8 +1219,8 @@ button:focus-visible {
   }
 
   .header-left::before {
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 32px;
   }
 
   .header-info {
