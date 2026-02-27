@@ -144,6 +144,59 @@ Notebooks are stored as JSON files:
 }
 ```
 
+## MCP Server
+
+notebook-lr provides an MCP (Model Context Protocol) server that allows AI assistants like Claude to interact with your notebooks programmatically.
+
+### Available Tools
+
+**Cell Content Operations:**
+- `get_cell_source(index)` - Get cell source code
+- `update_cell_source(index, source)` - Update cell source
+
+**Cell Management:**
+- `add_cell(cell_type, after_index, source)` - Add new cell
+- `delete_cell(index)` - Delete cell
+- `move_cell(index, direction)` - Move cell up/down
+- `get_cell(index)` - Get cell info
+- `list_cells()` - List all cells
+
+**Notebook Operations:**
+- `get_notebook_info()` - Get notebook metadata
+- `save_notebook(path, include_session)` - Save notebook
+
+### Configure in Claude Code
+
+Add to `~/.claude/settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "notebook-lr": {
+      "command": "uv",
+      "args": ["run", "--directory", "/path/to/notebook-lr", "python", "-m", "notebook_lr.mcp_server"],
+      "cwd": "/path/to/notebook-lr"
+    }
+  }
+}
+```
+
+Or use the CLI:
+
+```bash
+claude mcp add notebook-lr -- uv run --directory /path/to/notebook-lr python -m notebook_lr.mcp_server
+```
+
+### Run MCP Server Standalone
+
+```bash
+# Using uv
+uv run python -m notebook_lr.mcp_server
+
+# Or directly
+python -m notebook_lr.mcp_server
+```
+
 ## Development
 
 ```bash
