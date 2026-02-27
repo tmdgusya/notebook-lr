@@ -1,0 +1,359 @@
+"""
+MCP server for notebook-lr using FastMCP.
+
+This module provides MCP tools for interacting with Jupyter-like notebooks:
+- Cell Content Operations: get_cell_source, update_cell_source
+- Cell Management: add_cell, delete_cell, move_cell, get_cell, list_cells
+- Notebook Operations: get_notebook_info, save_notebook
+"""
+
+from pathlib import Path
+from typing import Optional
+
+from mcp.server.fastmcp import FastMCP
+from pydantic import BaseModel, Field
+
+from notebook_lr import Notebook, Cell, CellType, NotebookKernel, SessionManager
+
+
+# Pydantic models for structured output
+class CellOutput(BaseModel):
+    """Output data from a cell."""
+    index: int = Field(description="Cell index in the notebook")
+    id: str = Field(description="Unique cell identifier")
+    type: str = Field(description="Cell type: 'code' or 'markdown'")
+    source: str = Field(description="Cell source content")
+    outputs: list[dict] = Field(default_factory=list, description="Execution outputs")
+    execution_count: Optional[int] = Field(default=None, description="Execution count")
+
+
+class NotebookInfo(BaseModel):
+    """Information about the notebook."""
+    name: str = Field(description="Notebook name")
+    cell_count: int = Field(description="Total number of cells")
+    code_count: int = Field(description="Number of code cells")
+    markdown_count: int = Field(description="Number of markdown cells")
+    executed_count: int = Field(description="Number of executed cells")
+    version: str = Field(description="Notebook format version")
+    path: Optional[str] = Field(default=None, description="File path")
+
+
+class CellList(BaseModel):
+    """List of cells."""
+    cells: list[CellOutput] = Field(description="Array of cells")
+
+
+# Global state (would be managed properly in production)
+_notebook: Optional[Notebook] = None
+_kernel: Optional[NotebookKernel] = None
+_session_manager: Optional[SessionManager] = None
+
+mcp = FastMCP("notebook-lr")
+
+
+def get_notebook() -> Notebook:
+    """Get or create the current notebook."""
+    global _notebook
+    if _notebook is None:
+        _notebook = Notebook.new()
+    return _notebook
+
+
+def get_kernel() -> NotebookKernel:
+    """Get or create the current kernel."""
+    global _kernel
+    if _kernel is None:
+        _kernel = NotebookKernel()
+    return _kernel
+
+
+def get_session_manager() -> SessionManager:
+    """Get or create the session manager."""
+    global _session_manager
+    if _session_manager is None:
+        _session_manager = SessionManager()
+    return _session_manager
+
+
+def _validate_index(index: int) -> None:
+    """Validate that an index is within range."""
+    notebook = get_notebook()
+    if index < 0 or index >= len(notebook.cells):
+        raise ValueError(f"Cell index {index} out of range (0-{len(notebook.cells) - 1})")
+
+
+def _cell_to_output(cell: Cell, index: int) -> CellOutput:
+    """Convert a Cell to CellOutput."""
+    return CellOutput(
+        index=index,
+        id=cell.id,
+        type=cell.type.value,
+        source=cell.source,
+        outputs=cell.outputs,
+        execution_count=cell.execution_count
+    )
+
+
+# =============================================================================
+# Cell Content Operations
+# =============================================================================
+
+@mcp.tool()
+def get_cell_source(index: int) -> str:
+    """Get the source content of a cell at the specified index.
+
+    Args:
+        index: Zero-based index of the cell
+
+    Returns:
+        The cell's source code as a string
+
+    Raises:
+        ValueError: If index is out of range
+    """
+    notebook = get_notebook()
+    _validate_index(index)
+    cell = notebook.get_cell(index)
+    return cell.source
+
+
+@mcp.tool()
+def update_cell_source(index: int, source: str) -> bool:
+    """Update the source content of a cell at the specified index.
+
+    Args:
+        index: Zero-based index of the cell
+        source: New source code to set
+
+    Returns:
+        True if successful
+
+    Raises:
+        ValueError: If index is out of range
+    """
+    notebook = get_notebook()
+    _validate_index(index)
+    notebook.update_cell(index, source=source)
+    return True
+
+
+# =============================================================================
+# Cell Management Operations
+# =============================================================================
+
+@mcp.tool()
+def add_cell(
+    cell_type: str = "code",
+    after_index: Optional[int] = None,
+    source: str = ""
+) -> CellOutput:
+    """Add a new cell to the notebook.
+
+    Args:
+        cell_type: Type of cell - 'code' or 'markdown' (default: 'code')
+        after_index: Insert after this index. If None, append to end. (default: None)
+        source: Initial source content (default: empty string)
+
+    Returns:
+        CellOutput with index, id, type, and source of the new cell
+
+    Raises:
+        ValueError: If cell_type is invalid
+    """
+    notebook = get_notebook()
+
+    # Validate cell type
+    if cell_type not in ("code", "markdown"):
+        raise ValueError(f"Invalid cell type: {cell_type}. Must be 'code' or 'markdown'.")
+
+    ct = CellType.CODE if cell_type == "code" else CellType.MARKDOWN
+    cell = Cell(type=ct, source=source)
+
+    # Determine insertion index
+    if after_index is not None:
+        _validate_index(after_index)
+        new_idx = after_index + 1
+    else:
+        new_idx = len(notebook.cells)
+
+    notebook.insert_cell(new_idx, cell)
+
+    return _cell_to_output(cell, new_idx)
+
+
+@mcp.tool()
+def delete_cell(index: int) -> bool:
+    """Delete a cell at the specified index.
+
+    Args:
+        index: Zero-based index of the cell to delete
+
+    Returns:
+        True if successful
+
+    Raises:
+        ValueError: If index is out of range
+    """
+    notebook = get_notebook()
+    _validate_index(index)
+    notebook.remove_cell(index)
+    return True
+
+
+@mcp.tool()
+def move_cell(index: int, direction: str) -> dict:
+    """Move a cell up or down in the notebook.
+
+    Args:
+        index: Zero-based index of the cell to move
+        direction: Direction to move - 'up' or 'down'
+
+    Returns:
+        Dict with 'ok' (bool) and 'new_index' (int) if successful
+
+    Raises:
+        ValueError: If move is not possible (at boundaries) or direction is invalid
+    """
+    notebook = get_notebook()
+    _validate_index(index)
+
+    if direction not in ("up", "down"):
+        raise ValueError(f"Invalid direction: {direction}. Must be 'up' or 'down'.")
+
+    if direction == "up":
+        if index == 0:
+            raise ValueError("Cannot move first cell up.")
+        notebook.cells[index], notebook.cells[index - 1] = (
+            notebook.cells[index - 1],
+            notebook.cells[index],
+        )
+        return {"ok": True, "new_index": index - 1}
+    else:  # direction == "down"
+        if index == len(notebook.cells) - 1:
+            raise ValueError("Cannot move last cell down.")
+        notebook.cells[index], notebook.cells[index + 1] = (
+            notebook.cells[index + 1],
+            notebook.cells[index],
+        )
+        return {"ok": True, "new_index": index + 1}
+
+
+@mcp.tool()
+def get_cell(index: int) -> CellOutput:
+    """Get complete information about a cell at the specified index.
+
+    Args:
+        index: Zero-based index of the cell
+
+    Returns:
+        CellOutput with all cell properties including outputs
+
+    Raises:
+        ValueError: If index is out of range
+    """
+    notebook = get_notebook()
+    _validate_index(index)
+    cell = notebook.get_cell(index)
+    return _cell_to_output(cell, index)
+
+
+@mcp.tool()
+def list_cells() -> CellList:
+    """Get a list of all cells in the notebook.
+
+    Returns:
+        CellList containing an array of all cells with their indices
+    """
+    notebook = get_notebook()
+    cells = [
+        _cell_to_output(cell, i)
+        for i, cell in enumerate(notebook.cells)
+    ]
+    return CellList(cells=cells)
+
+
+# =============================================================================
+# Notebook Operations
+# =============================================================================
+
+@mcp.tool()
+def get_notebook_info() -> NotebookInfo:
+    """Get information about the current notebook.
+
+    Returns:
+        NotebookInfo with metadata including name, cell counts, and version
+    """
+    notebook = get_notebook()
+    name = notebook.metadata.get("name", "Untitled")
+    cell_count = len(notebook.cells)
+    code_count = sum(1 for c in notebook.cells if c.type == CellType.CODE)
+    md_count = cell_count - code_count
+    executed_count = sum(
+        1 for c in notebook.cells if c.execution_count is not None
+    )
+
+    return NotebookInfo(
+        name=name,
+        cell_count=cell_count,
+        code_count=code_count,
+        markdown_count=md_count,
+        executed_count=executed_count,
+        version=notebook.version,
+        path=notebook.metadata.get("path")
+    )
+
+
+@mcp.tool()
+def save_notebook(
+    path: Optional[str] = None,
+    include_session: bool = False
+) -> dict:
+    """Save the notebook to a file.
+
+    Args:
+        path: File path to save to. If None, uses existing path or 'notebook.nblr'
+        include_session: Whether to include kernel session state (default: False)
+
+    Returns:
+        Dict with 'status', 'path', and optionally session info
+    """
+    notebook = get_notebook()
+    kernel = get_kernel()
+    session_manager = get_session_manager()
+
+    save_path = path or notebook.metadata.get("path", "notebook.nblr")
+
+    if include_session:
+        session_data = {
+            "user_ns": kernel.get_namespace(),
+            "execution_count": kernel.execution_count,
+        }
+        notebook.save(Path(save_path), include_session=True, session_data=session_data)
+        session_manager.save_checkpoint(kernel, Path(save_path))
+        status = "saved with session"
+    else:
+        notebook.save(Path(save_path))
+        status = "saved"
+
+    notebook.metadata["path"] = save_path
+
+    return {
+        "status": status,
+        "path": save_path
+    }
+
+
+# =============================================================================
+# Module Reset (for testing)
+# =============================================================================
+
+def _reset_notebook() -> None:
+    """Reset the global notebook state. Useful for testing."""
+    global _notebook, _kernel, _session_manager
+    _notebook = None
+    _kernel = None
+    _session_manager = None
+
+
+if __name__ == "__main__":
+    mcp.run()
