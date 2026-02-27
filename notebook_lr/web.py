@@ -294,7 +294,39 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
                 return cell
         return None
 
-    def _call_claude(cell_source: str, selected_text: str, user_comment: str) -> str:
+    def _build_provider_env(provider: str) -> dict:
+        """Build environment dict for subprocess based on provider."""
+        import os
+        env = os.environ.copy()
+
+        if provider == "glm":
+            token = os.environ.get("GT_GLM_AUTH_TOKEN")
+            base_url = os.environ.get("GT_GLM_BASE_URL")
+            if not token or not base_url:
+                raise ValueError("GLM 환경변수(GT_GLM_AUTH_TOKEN, GT_GLM_BASE_URL)가 설정되지 않았습니다")
+            env["ANTHROPIC_AUTH_TOKEN"] = token
+            env["ANTHROPIC_BASE_URL"] = base_url
+            env["ANTHROPIC_VERSION"] = "2023-06-01"
+        elif provider == "kimi":
+            token = os.environ.get("GT_KIMI_AUTH_TOKEN")
+            base_url = os.environ.get("GT_KIMI_BASE_URL")
+            model = os.environ.get("GT_KIMI_MODEL")
+            if not token or not base_url:
+                raise ValueError("Kimi 환경변수(GT_KIMI_AUTH_TOKEN, GT_KIMI_BASE_URL)가 설정되지 않았습니다")
+            env["ANTHROPIC_AUTH_TOKEN"] = token
+            env["ANTHROPIC_BASE_URL"] = base_url
+            if model:
+                env["ANTHROPIC_MODEL"] = model
+        else:
+            # claude: remove any overrides so native Anthropic is used
+            env.pop("ANTHROPIC_AUTH_TOKEN", None)
+            env.pop("ANTHROPIC_BASE_URL", None)
+            env.pop("ANTHROPIC_MODEL", None)
+            env.pop("ANTHROPIC_VERSION", None)
+
+        return env
+
+    def _call_ai(cell_source: str, selected_text: str, user_comment: str, provider: str = "claude") -> str:
         import subprocess
 
         prompt = f"""다음은 Python 노트북 셀의 전체 코드입니다:
@@ -313,9 +345,14 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
 선택된 코드에 대해 교육적인 답변을 한국어로 제공해주세요."""
 
         try:
+            env = _build_provider_env(provider)
+        except ValueError as e:
+            return f"Error: {e}"
+
+        try:
             result = subprocess.run(
                 ['claude', '-p', prompt, '--dangerously-skip-permissions'],
-                capture_output=True, text=True, timeout=120
+                capture_output=True, text=True, timeout=120, env=env
             )
             return result.stdout.strip() if result.returncode == 0 else f"Error: {result.stderr.strip()}"
         except subprocess.TimeoutExpired:
@@ -331,6 +368,10 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
         if not cell:
             return jsonify({"ok": False, "error": "cell not found"}), 404
 
+        provider = data.get("provider", "claude")
+        if provider not in ("claude", "glm", "kimi"):
+            provider = "claude"
+
         comment = Comment(
             from_line=int(data.get("from_line", 0)),
             from_ch=int(data.get("from_ch", 0)),
@@ -338,10 +379,11 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
             to_ch=int(data.get("to_ch", 0)),
             selected_text=data.get("selected_text", ""),
             user_comment=data.get("user_comment", ""),
+            provider=provider,
             status="loading",
         )
 
-        ai_response = _call_claude(cell.source, comment.selected_text, comment.user_comment)
+        ai_response = _call_ai(cell.source, comment.selected_text, comment.user_comment, provider)
         if ai_response.startswith("Error:"):
             comment.status = "error"
         else:

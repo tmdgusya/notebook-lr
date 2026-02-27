@@ -30,6 +30,7 @@ class Comment(BaseModel):
     user_comment: str
     ai_response: str = ""
     status: str = "pending"  # pending | loading | resolved | error
+    provider: str = "claude"  # claude | glm | kimi
     created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
 
 

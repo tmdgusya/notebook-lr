@@ -153,6 +153,45 @@ NB.comments = (function () {
     textarea.placeholder = '질문이나 코멘트를 입력하세요...';
     textarea.rows = 2;
 
+    // Provider selection
+    var selectedProvider = 'claude';
+    var providerRow = document.createElement('div');
+    providerRow.className = 'comment-provider-row';
+
+    var providers = [
+      { id: 'claude', label: 'Claude', color: '#1a73e8' },
+      { id: 'glm',   label: 'GLM',    color: '#34a853' },
+      { id: 'kimi',  label: 'Kimi',   color: '#9334e6' }
+    ];
+
+    var providerBtns = [];
+    providers.forEach(function (p) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'comment-provider-btn' + (p.id === selectedProvider ? ' active' : '');
+      btn.textContent = p.label;
+      if (p.id === selectedProvider) {
+        btn.style.borderColor = p.color;
+        btn.style.color = p.color;
+        btn.style.background = p.color + '12';
+      }
+      btn.addEventListener('click', function () {
+        selectedProvider = p.id;
+        providerBtns.forEach(function (b) {
+          b.classList.remove('active');
+          b.style.borderColor = '';
+          b.style.color = '';
+          b.style.background = '';
+        });
+        btn.classList.add('active');
+        btn.style.borderColor = p.color;
+        btn.style.color = p.color;
+        btn.style.background = p.color + '12';
+      });
+      providerBtns.push(btn);
+      providerRow.appendChild(btn);
+    });
+
     var btnRow = document.createElement('div');
     btnRow.className = 'comment-btn-row';
 
@@ -169,6 +208,7 @@ NB.comments = (function () {
 
     node.appendChild(selectedPreview);
     node.appendChild(textarea);
+    node.appendChild(providerRow);
     node.appendChild(btnRow);
 
     // Cancel handler
@@ -198,7 +238,8 @@ NB.comments = (function () {
         to_line: to.line,
         to_ch: to.ch,
         selected_text: selectedText,
-        user_comment: userComment
+        user_comment: userComment,
+        provider: selectedProvider
       }).then(function (res) {
         if (res.ok && res.comment) {
           // Replace form with result widget
@@ -235,13 +276,23 @@ NB.comments = (function () {
     node.className = 'inline-comment-widget';
     node.dataset.commentId = comment.id;
 
-    // Header: user question
+    // Header: user question + provider badge
     var header = document.createElement('div');
     header.className = 'comment-header';
 
     var userQ = document.createElement('div');
     userQ.className = 'comment-user-question';
     userQ.textContent = comment.user_comment;
+
+    // Provider badge
+    var providerColors = { claude: '#1a73e8', glm: '#34a853', kimi: '#9334e6' };
+    var providerLabels = { claude: 'Claude', glm: 'GLM', kimi: 'Kimi' };
+    var prov = comment.provider || 'claude';
+    var badge = document.createElement('span');
+    badge.className = 'comment-provider-badge';
+    badge.textContent = providerLabels[prov] || prov;
+    badge.style.borderColor = providerColors[prov] || '#5f6368';
+    badge.style.color = providerColors[prov] || '#5f6368';
 
     var deleteBtn = document.createElement('button');
     deleteBtn.className = 'comment-delete-btn';
@@ -252,6 +303,7 @@ NB.comments = (function () {
     });
 
     header.appendChild(userQ);
+    header.appendChild(badge);
     header.appendChild(deleteBtn);
 
     // Response body

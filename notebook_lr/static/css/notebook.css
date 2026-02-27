@@ -1594,6 +1594,48 @@ button:focus-visible {
   font-size: 0.9em;
 }
 
+/* Provider selection row */
+.comment-provider-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.comment-provider-btn {
+  padding: 3px 12px;
+  border-radius: 14px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #5f6368;
+  background: #ffffff;
+  border: 1px solid #dadce0;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+  line-height: 18px;
+}
+
+.comment-provider-btn:hover {
+  background: #f1f3f4;
+}
+
+.comment-provider-btn.active {
+  font-weight: 600;
+}
+
+/* Provider badge in result widget */
+.comment-provider-badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 500;
+  border: 1px solid #dadce0;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 18px;
+}
+
 /* Stale comment warning */
 .comment-stale-warning {
   padding: 6px 12px;
