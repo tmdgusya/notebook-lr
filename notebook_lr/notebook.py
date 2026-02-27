@@ -19,6 +19,20 @@ class CellType(str, Enum):
     MARKDOWN = "markdown"
 
 
+class Comment(BaseModel):
+    """An inline code comment with optional AI response."""
+    id: str = Field(default_factory=lambda: f"cmt_{datetime.now().strftime('%Y%m%d%H%M%S%f')}")
+    from_line: int
+    from_ch: int
+    to_line: int
+    to_ch: int
+    selected_text: str
+    user_comment: str
+    ai_response: str = ""
+    status: str = "pending"  # pending | loading | resolved | error
+    created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
+
+
 class Cell(BaseModel):
     """A single notebook cell."""
     id: str = Field(default_factory=lambda: f"cell_{datetime.now().strftime('%Y%m%d%H%M%S%f')}")
@@ -27,6 +41,7 @@ class Cell(BaseModel):
     outputs: list[dict[str, Any]] = Field(default_factory=list)
     execution_count: Optional[int] = None
     metadata: dict[str, Any] = Field(default_factory=dict)
+    comments: list[Comment] = Field(default_factory=list)
 
     def to_dict(self) -> dict:
         """Convert to dictionary for serialization."""
@@ -37,6 +52,7 @@ class Cell(BaseModel):
             "outputs": self.outputs,
             "execution_count": self.execution_count,
             "metadata": self.metadata,
+            "comments": [c.model_dump() for c in self.comments],
         }
 
     @classmethod
@@ -49,6 +65,7 @@ class Cell(BaseModel):
             outputs=data.get("outputs", []),
             execution_count=data.get("execution_count"),
             metadata=data.get("metadata", {}),
+            comments=[Comment(**c) for c in data.get("comments", [])],
         )
 
 

@@ -7,7 +7,7 @@ import tempfile
 from pathlib import Path
 from typing import Optional
 
-from notebook_lr import NotebookKernel, Notebook, Cell, CellType, SessionManager
+from notebook_lr import NotebookKernel, Notebook, Cell, CellType, Comment, SessionManager
 from notebook_lr.utils import format_output
 
 
@@ -53,6 +53,7 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
             "source": cell.source,
             "outputs": cell.outputs,
             "execution_count": cell.execution_count,
+            "comments": [c.model_dump() for c in cell.comments],
         }
 
     def _format_outputs(outputs: list) -> tuple[str, str]:
@@ -282,6 +283,89 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
             "md_count": md_count,
             "executed_count": executed_count,
         })
+
+    # ------------------------------------------------------------------ #
+    # Comment helpers & routes
+    # ------------------------------------------------------------------ #
+
+    def _find_cell_by_id(cell_id: str) -> Optional[Cell]:
+        for cell in notebook.cells:
+            if cell.id == cell_id:
+                return cell
+        return None
+
+    def _call_claude(cell_source: str, selected_text: str, user_comment: str) -> str:
+        import subprocess
+
+        prompt = f"""다음은 Python 노트북 셀의 전체 코드입니다:
+
+```python
+{cell_source}
+```
+
+사용자가 다음 부분을 선택했습니다:
+```
+{selected_text}
+```
+
+사용자의 질문: {user_comment}
+
+선택된 코드에 대해 교육적인 답변을 한국어로 제공해주세요."""
+
+        try:
+            result = subprocess.run(
+                ['claude', '-p', prompt, '--dangerously-skip-permissions'],
+                capture_output=True, text=True, timeout=120
+            )
+            return result.stdout.strip() if result.returncode == 0 else f"Error: {result.stderr.strip()}"
+        except subprocess.TimeoutExpired:
+            return "Error: AI 응답 시간 초과"
+        except FileNotFoundError:
+            return "Error: claude CLI를 찾을 수 없습니다"
+
+    @app.route("/api/cell/comment/add", methods=["POST"])
+    def api_cell_comment_add():
+        data = request.get_json(force=True) or {}
+        cell_id = data.get("cell_id", "")
+        cell = _find_cell_by_id(cell_id)
+        if not cell:
+            return jsonify({"ok": False, "error": "cell not found"}), 404
+
+        comment = Comment(
+            from_line=int(data.get("from_line", 0)),
+            from_ch=int(data.get("from_ch", 0)),
+            to_line=int(data.get("to_line", 0)),
+            to_ch=int(data.get("to_ch", 0)),
+            selected_text=data.get("selected_text", ""),
+            user_comment=data.get("user_comment", ""),
+            status="loading",
+        )
+
+        ai_response = _call_claude(cell.source, comment.selected_text, comment.user_comment)
+        if ai_response.startswith("Error:"):
+            comment.status = "error"
+        else:
+            comment.status = "resolved"
+        comment.ai_response = ai_response
+
+        cell.comments.append(comment)
+        notebook._touch()
+
+        return jsonify({"ok": True, "comment": comment.model_dump()})
+
+    @app.route("/api/cell/comment/delete", methods=["POST"])
+    def api_cell_comment_delete():
+        data = request.get_json(force=True) or {}
+        cell_id = data.get("cell_id", "")
+        comment_id = data.get("comment_id", "")
+        cell = _find_cell_by_id(cell_id)
+        if not cell:
+            return jsonify({"ok": False, "error": "cell not found"}), 404
+
+        cell.comments = [c for c in cell.comments if c.id != comment_id]
+        notebook._touch()
+
+        return jsonify({"ok": True})
 
     # ------------------------------------------------------------------ #
     # Launch

@@ -7,6 +7,9 @@ NB.app = {
     // 1. Initialize toolbar (button event listeners)
     NB.toolbar.init();
 
+    // 1b. Initialize inline comments
+    if (NB.comments) NB.comments.init();
+
     // 2. Load notebook data from server
     try {
       var data = await NB.api.getNotebook();

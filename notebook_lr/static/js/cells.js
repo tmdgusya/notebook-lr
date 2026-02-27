@@ -6,6 +6,7 @@ NB.cells = (function () {
   let debounceTimers = {}; // index -> timer id
 
   function clearEditors() {
+    if (NB.comments) NB.comments.clearAll();
     cellEditors = {};
   }
 
@@ -33,9 +34,13 @@ NB.cells = (function () {
       addCell(afterIndex, 'markdown');
     });
 
+    const btnGroup = document.createElement('div');
+    btnGroup.className = 'divider-buttons';
+    btnGroup.appendChild(codeBtn);
+    btnGroup.appendChild(mdBtn);
+
     div.appendChild(line);
-    div.appendChild(codeBtn);
-    div.appendChild(mdBtn);
+    div.appendChild(btnGroup);
     return div;
   }
 
@@ -149,6 +154,9 @@ NB.cells = (function () {
     });
 
     cellEditors[index] = cm;
+
+    // Attach inline comment support
+    if (NB.comments) NB.comments.attachToEditor(cm, cell);
 
     // Refresh editor after a brief delay to ensure proper rendering
     // This fixes the issue where content is only visible after clicking

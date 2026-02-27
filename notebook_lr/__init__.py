@@ -8,7 +8,7 @@ This package provides a lightweight notebook system where:
 """
 
 from notebook_lr.kernel import NotebookKernel, ExecutionResult
-from notebook_lr.notebook import Notebook, Cell, CellType
+from notebook_lr.notebook import Notebook, Cell, CellType, Comment
 from notebook_lr.session import SessionManager
 
 __version__ = "0.1.0"
@@ -18,5 +18,6 @@ __all__ = [
     "Notebook",
     "Cell",
     "CellType",
+    "Comment",
     "SessionManager",
 ]

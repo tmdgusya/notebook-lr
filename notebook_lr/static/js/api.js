@@ -35,6 +35,8 @@ NB.api = (function() {
     },
     getVariables()             { return _get('/api/variables'); },
     clearVariables()           { return _post('/api/clear-variables', {}); },
-    getNotebookInfo()          { return _get('/api/notebook-info'); }
+    getNotebookInfo()          { return _get('/api/notebook-info'); },
+    addComment(cellId, data)   { return _post('/api/cell/comment/add', Object.assign({ cell_id: cellId }, data)); },
+    deleteComment(cellId, commentId) { return _post('/api/cell/comment/delete', { cell_id: cellId, comment_id: commentId }); }
   };
 })();
