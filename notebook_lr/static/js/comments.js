@@ -175,6 +175,7 @@ NB.comments = (function () {
         btn.style.color = p.color;
         btn.style.background = p.color + '12';
       }
+      btn.addEventListener('mousedown', function (e) { e.preventDefault(); });
       btn.addEventListener('click', function () {
         selectedProvider = p.id;
         providerBtns.forEach(function (b) {
