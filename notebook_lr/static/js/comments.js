@@ -188,6 +188,7 @@ NB.comments = (function () {
         btn.style.borderColor = p.color;
         btn.style.color = p.color;
         btn.style.background = p.color + '12';
+        setTimeout(function () { textarea.focus(); }, 0);
       });
       providerBtns.push(btn);
       providerRow.appendChild(btn);
