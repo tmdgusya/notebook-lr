@@ -81,7 +81,7 @@ NB.comments = (function () {
         if (sel.trim().length > 0) {
           var from = cm.getCursor('from');
           var to = cm.getCursor('to');
-          var coords = cm.charCoords(to, 'page');
+          var coords = cm.charCoords(to, 'window');
           currentSelection = {
             cm: cm,
             cellId: cellId,
