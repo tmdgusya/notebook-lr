@@ -294,35 +294,52 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
                 return cell
         return None
 
+    def _load_gt_env(provider_cmd: str) -> dict:
+        """Source ~/gl-switcher/gt.sh, run 'gt <cmd>', return ANTHROPIC_*/API_TIMEOUT_* vars."""
+        import subprocess, os
+        gt_path = os.path.expanduser("~/gl-switcher/gt.sh")
+        if not os.path.isfile(gt_path):
+            raise ValueError(f"gt.sh를 찾을 수 없습니다: {gt_path}")
+
+        script = f'source "{gt_path}" && gt {provider_cmd} >/dev/null 2>&1 && env'
+        user_shell = os.environ.get('SHELL', '/bin/bash')
+        result = subprocess.run(
+            [user_shell, '-ic', script],
+            capture_output=True, text=True,
+            env=os.environ.copy(),
+        )
+        if result.returncode != 0:
+            raise ValueError(f"gt {provider_cmd} 실행 실패: {result.stderr.strip()}")
+
+        env = {}
+        for line in result.stdout.splitlines():
+            key, _, value = line.partition('=')
+            if key.startswith("ANTHROPIC_") or key.startswith("API_TIMEOUT"):
+                env[key] = value
+        return env
+
+    _PLACEHOLDER_TOKENS = {"your-z-ai-token-here", "your-kimi-token-here"}
+
     def _build_provider_env(provider: str) -> dict:
         """Build environment dict for subprocess based on provider."""
         import os
         env = os.environ.copy()
+        cmd_map = {"glm": "g", "kimi": "k", "claude": "c"}
+        cmd = cmd_map.get(provider, "c")
+        gt_vars = _load_gt_env(cmd)
+        env.update(gt_vars)
 
-        if provider == "glm":
-            token = os.environ.get("GT_GLM_AUTH_TOKEN")
-            base_url = os.environ.get("GT_GLM_BASE_URL")
-            if not token or not base_url:
-                raise ValueError("GLM 환경변수(GT_GLM_AUTH_TOKEN, GT_GLM_BASE_URL)가 설정되지 않았습니다")
-            env["ANTHROPIC_AUTH_TOKEN"] = token
-            env["ANTHROPIC_BASE_URL"] = base_url
-            env["ANTHROPIC_VERSION"] = "2023-06-01"
-        elif provider == "kimi":
-            token = os.environ.get("GT_KIMI_AUTH_TOKEN")
-            base_url = os.environ.get("GT_KIMI_BASE_URL")
-            model = os.environ.get("GT_KIMI_MODEL")
-            if not token or not base_url:
-                raise ValueError("Kimi 환경변수(GT_KIMI_AUTH_TOKEN, GT_KIMI_BASE_URL)가 설정되지 않았습니다")
-            env["ANTHROPIC_AUTH_TOKEN"] = token
-            env["ANTHROPIC_BASE_URL"] = base_url
-            if model:
-                env["ANTHROPIC_MODEL"] = model
-        else:
-            # claude: remove any overrides so native Anthropic is used
-            env.pop("ANTHROPIC_AUTH_TOKEN", None)
-            env.pop("ANTHROPIC_BASE_URL", None)
-            env.pop("ANTHROPIC_MODEL", None)
-            env.pop("ANTHROPIC_VERSION", None)
+        # Validate that the token is not a gt.sh placeholder
+        token = env.get("ANTHROPIC_AUTH_TOKEN", "")
+        if provider != "claude" and token in _PLACEHOLDER_TOKENS:
+            raise ValueError(f"{provider} API 토큰이 설정되지 않았습니다. ANTHROPIC_AUTH_TOKEN을 확인해주세요.")
+
+        # claude mode: gt.sh already unsets overrides, but clean up any
+        # that leaked from the parent process environment
+        if provider == "claude":
+            for k in ["ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_BASE_URL",
+                       "ANTHROPIC_MODEL", "ANTHROPIC_VERSION"]:
+                env.pop(k, None)
 
         return env
 
@@ -371,6 +388,12 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
         provider = data.get("provider", "claude")
         if provider not in ("claude", "glm", "kimi"):
             provider = "claude"
+
+        # Validate provider env vars before creating a comment
+        try:
+            _build_provider_env(provider)
+        except ValueError as e:
+            return jsonify({"ok": False, "error": str(e)})
 
         comment = Comment(
             from_line=int(data.get("from_line", 0)),
