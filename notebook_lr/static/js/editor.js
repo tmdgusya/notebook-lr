@@ -12,7 +12,7 @@ NB.editor = (function() {
 
   return {
     create(element, options) {
-      // options: { mode: 'python'|'markdown', value: str, onChange: fn, onRun: fn }
+      // options: { mode: 'python'|'markdown', value: str, onChange: fn, onRun: fn, onExitEdit: fn, onEscape: fn }
       const cm = CodeMirror(element, {
         value: options.value || '',
         mode: options.mode || 'python',
@@ -27,10 +27,21 @@ NB.editor = (function() {
         viewportMargin: Infinity,  // Auto-height: editor grows with content
         extraKeys: {
           'Shift-Enter': function(cm) {
-            if (options.onRun) options.onRun();
+            if (options.onExitEdit) {
+              options.onExitEdit();
+            } else if (options.onRun) {
+              options.onRun();
+            }
           },
           'Ctrl-Enter': function(cm) {
-            if (options.onRun) options.onRun();
+            if (options.onExitEdit) {
+              options.onExitEdit();
+            } else if (options.onRun) {
+              options.onRun();
+            }
+          },
+          'Escape': function(cm) {
+            if (options.onEscape) options.onEscape();
           },
           'Tab': function(cm) {
             if (cm.somethingSelected()) {

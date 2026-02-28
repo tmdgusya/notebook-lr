@@ -59,7 +59,10 @@ NB.execution = {
           if (data['text/html']) {
             div.innerHTML = data['text/html'];
           } else if (data['text/markdown']) {
-            div.textContent = data['text/markdown'];
+            div.className += ' markdown-rendered';
+            div.innerHTML = (typeof marked !== 'undefined' && marked.parse)
+              ? marked.parse(data['text/markdown'])
+              : data['text/markdown'];
           } else {
             div.textContent = data['text/plain'] || '';
           }
@@ -77,6 +80,11 @@ NB.execution = {
           const dd = output.data || {};
           if (dd['text/html']) {
             div.innerHTML = dd['text/html'];
+          } else if (dd['text/markdown']) {
+            div.className += ' markdown-rendered';
+            div.innerHTML = (typeof marked !== 'undefined' && marked.parse)
+              ? marked.parse(dd['text/markdown'])
+              : dd['text/markdown'];
           } else {
             div.textContent = dd['text/plain'] || '';
           }

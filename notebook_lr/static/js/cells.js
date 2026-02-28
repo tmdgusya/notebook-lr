@@ -79,10 +79,15 @@ NB.cells = (function () {
     const editorEl = document.createElement('div');
     editorEl.className = 'cell-editor';
 
+    const previewEl = document.createElement('div');
+    previewEl.className = 'cell-md-preview';
+    previewEl.style.display = 'none';
+
     const outputEl = document.createElement('div');
     outputEl.className = 'cell-output';
 
     content.appendChild(editorEl);
+    content.appendChild(previewEl);
     content.appendChild(outputEl);
 
     // Actions
@@ -134,6 +139,36 @@ NB.cells = (function () {
     const mode = cellType === 'markdown' ? 'markdown' : 'python';
     const value = cell.source || '';
 
+    // For markdown cells, add a preview toggle button to gutter
+    let previewActive = false;
+    if (cellType === 'markdown') {
+      const previewBtn = document.createElement('button');
+      previewBtn.className = 'preview-toggle-btn';
+      previewBtn.title = 'Toggle preview';
+      previewBtn.textContent = 'Preview';
+      previewBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        previewActive = !previewActive;
+        if (previewActive) {
+          const src = cm ? cm.getValue() : value;
+          previewEl.innerHTML = (typeof marked !== 'undefined')
+            ? marked.parse(src)
+            : src;
+          previewEl.style.display = '';
+          editorEl.style.display = 'none';
+          previewBtn.textContent = 'Edit';
+          previewBtn.classList.add('active');
+        } else {
+          previewEl.style.display = 'none';
+          editorEl.style.display = '';
+          previewBtn.textContent = 'Preview';
+          previewBtn.classList.remove('active');
+          if (cm) cm.refresh();
+        }
+      });
+      gutter.appendChild(previewBtn);
+    }
+
     // Mount CodeMirror
     const cm = NB.editor.create(editorEl, {
       mode: mode,
@@ -148,9 +183,29 @@ NB.cells = (function () {
           NB.api.updateCell(index, newValue);
         }, 500);
       },
-      onRun: function () {
+      onRun: cellType === 'markdown' ? null : function () {
         NB.execution.executeCell(index);
-      }
+      },
+      onExitEdit: cellType === 'markdown' ? function () {
+        // Shift-Enter/Ctrl-Enter on markdown cells triggers preview
+        previewActive = !previewActive;
+        if (previewActive) {
+          const src = cm ? cm.getValue() : value;
+          previewEl.innerHTML = (typeof marked !== 'undefined')
+            ? marked.parse(src)
+            : src;
+          previewEl.style.display = '';
+          editorEl.style.display = 'none';
+          const previewBtn = cellDiv.querySelector('.preview-toggle-btn');
+          if (previewBtn) { previewBtn.textContent = 'Edit'; previewBtn.classList.add('active'); }
+        } else {
+          previewEl.style.display = 'none';
+          editorEl.style.display = '';
+          const previewBtn = cellDiv.querySelector('.preview-toggle-btn');
+          if (previewBtn) { previewBtn.textContent = 'Preview'; previewBtn.classList.remove('active'); }
+          if (cm) cm.refresh();
+        }
+      } : null
     });
 
     cellEditors[index] = cm;
