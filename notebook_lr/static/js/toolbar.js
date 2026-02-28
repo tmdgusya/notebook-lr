@@ -41,12 +41,15 @@ NB.toolbar = {
 
     NB.toolbar.initKeyboardShortcuts();
 
-    // Monitor cell changes for autosave indicator
-    const origUpdateCell = NB.api.updateCell;
-    NB.api.updateCell = async function() {
-      NB.fileops.markDirty();
-      return origUpdateCell.apply(NB.api, arguments);
-    };
+    // Monitor cell changes for autosave indicator (idempotent)
+    if (!NB.api._updateCellPatched) {
+      const origUpdateCell = NB.api.updateCell;
+      NB.api.updateCell = async function() {
+        NB.fileops.markDirty();
+        return origUpdateCell.apply(NB.api, arguments);
+      };
+      NB.api._updateCellPatched = true;
+    }
   },
 
   async updateInfo() {

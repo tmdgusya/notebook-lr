@@ -38,14 +38,16 @@ NB.fileops = {
     const el = document.getElementById('save-indicator');
     if (!el) return;
     el.className = 'save-indicator save-' + state;
-    if (state === 'saved') { el.innerHTML = '&#10003; Saved'; el.title = 'All changes saved'; }
-    else if (state === 'modified') { el.innerHTML = '&#9679; Modified'; el.title = 'Unsaved changes'; }
-    else if (state === 'saving') { el.innerHTML = '&#8987; Saving...'; el.title = 'Saving...'; }
+    if (state === 'saved') { el.textContent = '\u2713 Saved'; el.title = 'All changes saved'; }
+    else if (state === 'modified') { el.textContent = '\u25CF Modified'; el.title = 'Unsaved changes'; }
+    else if (state === 'saving') { el.textContent = '\u23F3 Saving...'; el.title = 'Saving...'; }
   },
 
   _startAutosave() {
-    if (NB.fileops._autosaveTimer) clearTimeout(NB.fileops._autosaveTimer);
+    // Don't reset timer if one is already pending
+    if (NB.fileops._autosaveTimer) return;
     NB.fileops._autosaveTimer = setTimeout(async function() {
+      NB.fileops._autosaveTimer = null;
       if (NB.fileops._isDirty) {
         NB.fileops._updateIndicator('saving');
         try {
@@ -56,6 +58,6 @@ NB.fileops = {
           NB.fileops._updateIndicator('modified');
         }
       }
-    }, 30000); // 30초 후 자동저장
+    }, 30000);
   },
 };

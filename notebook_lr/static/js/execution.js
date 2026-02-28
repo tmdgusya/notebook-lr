@@ -34,14 +34,42 @@ NB.execution = {
     }
   },
 
+  _sanitizeHtml(html) {
+    if (typeof DOMPurify !== 'undefined') {
+      return DOMPurify.sanitize(html);
+    }
+    return html;
+  },
+
+  _sanitizeSvg(svg) {
+    if (typeof DOMPurify !== 'undefined') {
+      return DOMPurify.sanitize(svg, {USE_PROFILES: {svg: true, svgFilters: true}});
+    }
+    // Minimal fallback: parse and strip scripts/event handlers
+    var parser = new DOMParser();
+    var doc = parser.parseFromString(svg, 'image/svg+xml');
+    var dangerous = doc.querySelectorAll('script, foreignObject');
+    dangerous.forEach(function(el) { el.remove(); });
+    // Strip event handler attributes
+    var allEls = doc.querySelectorAll('*');
+    allEls.forEach(function(el) {
+      var attrs = Array.from(el.attributes);
+      attrs.forEach(function(attr) {
+        if (attr.name.startsWith('on')) el.removeAttribute(attr.name);
+      });
+    });
+    return doc.documentElement ? doc.documentElement.outerHTML : svg;
+  },
+
   _renderRichData(div, data) {
     if (data['text/html']) {
-      div.innerHTML = data['text/html'];
+      div.innerHTML = NB.execution._sanitizeHtml(data['text/html']);
     } else if (data['text/markdown']) {
       div.classList.add('markdown-rendered');
-      div.innerHTML = (typeof marked !== 'undefined' && marked.parse)
+      var rendered = (typeof marked !== 'undefined' && marked.parse)
         ? marked.parse(data['text/markdown'])
         : data['text/markdown'];
+      div.innerHTML = NB.execution._sanitizeHtml(rendered);
     } else if (data['image/png']) {
       var img = document.createElement('img');
       img.src = 'data:image/png;base64,' + data['image/png'];
@@ -50,7 +78,7 @@ NB.execution = {
     } else if (data['image/svg+xml']) {
       var svgDiv = document.createElement('div');
       svgDiv.className = 'output-image output-svg';
-      svgDiv.innerHTML = data['image/svg+xml'];
+      svgDiv.innerHTML = NB.execution._sanitizeSvg(data['image/svg+xml']);
       div.appendChild(svgDiv);
     } else if (data['text/latex']) {
       var latexDiv = document.createElement('div');
@@ -68,7 +96,9 @@ NB.execution = {
         }
         try {
           katex.render(stripped, latexDiv, {throwOnError: false, displayMode: true});
-        } catch(e) {}
+        } catch(e) {
+          console.warn('KaTeX render failed:', e);
+        }
       }
     } else if (data['application/json']) {
       var jsonPre = document.createElement('pre');
@@ -133,20 +163,25 @@ NB.execution = {
 
     // Output folding
     setTimeout(function() {
+      // Clean up any existing expand button from previous render
+      var existingBtn = outputElement.parentNode && outputElement.parentNode.querySelector('.output-expand-btn');
+      if (existingBtn) existingBtn.remove();
+      outputElement.classList.remove('output-folded', 'output-expanded');
+
       if (outputElement.scrollHeight > 400) {
         outputElement.classList.add('output-folded');
         var expandBtn = document.createElement('button');
         expandBtn.className = 'output-expand-btn';
-        expandBtn.textContent = '더 보기 ▼';
+        expandBtn.textContent = 'Show more \u25BC';
         expandBtn.addEventListener('click', function() {
           if (outputElement.classList.contains('output-folded')) {
             outputElement.classList.remove('output-folded');
             outputElement.classList.add('output-expanded');
-            expandBtn.textContent = '접기 ▲';
+            expandBtn.textContent = 'Show less \u25B2';
           } else {
             outputElement.classList.add('output-folded');
             outputElement.classList.remove('output-expanded');
-            expandBtn.textContent = '더 보기 ▼';
+            expandBtn.textContent = 'Show more \u25BC';
           }
         });
         outputElement.parentNode.insertBefore(expandBtn, outputElement.nextSibling);
