@@ -1946,3 +1946,149 @@ button:focus-visible {
   border-color: #1a73e8;
   color: #1a73e8;
 }
+
+/* ===== Phase 1: Quick Wins Styles ===== */
+
+/* 1. Image Output Rendering */
+.output-image {
+  max-width: 100%;
+  display: block;
+  margin: 8px 0;
+}
+.output-image img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+.output-svg svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* 2. LaTeX Rendering */
+.output-latex {
+  padding: 8px 12px;
+  margin: 4px 0;
+  font-size: 1.1em;
+}
+.katex-display {
+  margin: 0.5em 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* 3. JSON Output */
+.output-json {
+  background: #f8f9fa;
+  border: 1px solid #e8eaed;
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin: 4px 0;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 13px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* 4. Autosave Indicator */
+.save-indicator {
+  font-size: 13px;
+  margin-left: 12px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 400;
+}
+.save-indicator.save-saved {
+  color: #34a853;
+}
+.save-indicator.save-modified {
+  color: #ea4335;
+}
+.save-indicator.save-saving {
+  color: #fbbc04;
+  animation: pulse 1s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* 5. Cell Collapse */
+.cell-collapse-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  font-size: 10px;
+  color: #999;
+  border-radius: 3px;
+  line-height: 1;
+  transition: color 0.2s;
+  display: block;
+  margin-bottom: 4px;
+}
+.cell-collapse-btn:hover {
+  color: #333;
+  background: #e8eaed;
+}
+.cell.cell-collapsed .cell-content {
+  display: none !important;
+}
+.cell.cell-collapsed .cell-actions {
+  display: none !important;
+}
+.cell.cell-collapsed {
+  border-left-color: #dadce0;
+  opacity: 0.7;
+  min-height: auto;
+}
+.cell.cell-collapsed:hover {
+  opacity: 1;
+}
+
+/* 6. Output Folding */
+.cell-output.output-folded {
+  max-height: 400px;
+  overflow: hidden;
+  position: relative;
+}
+.cell-output.output-folded::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: linear-gradient(transparent, white);
+  pointer-events: none;
+}
+.output-expand-btn {
+  display: block;
+  width: 100%;
+  padding: 6px;
+  border: 1px solid #dadce0;
+  border-radius: 0 0 4px 4px;
+  background: #f8f9fa;
+  color: #5f6368;
+  cursor: pointer;
+  font-size: 12px;
+  text-align: center;
+  transition: background 0.2s;
+  margin-top: -1px;
+}
+.output-expand-btn:hover {
+  background: #e8eaed;
+  color: #202124;
+}
+.cell-output.output-expanded {
+  max-height: none;
+  overflow: visible;
+}
+.cell-output.output-expanded::after {
+  display: none;
+}

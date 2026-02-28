@@ -100,8 +100,17 @@ class NotebookKernel:
 
     def _setup_namespace(self):
         """Set up the initial namespace with useful imports."""
-        # Add some convenience to the namespace
         self.ip.user_ns["__notebook__"] = True
+
+        # Configure matplotlib to use inline backend for notebook rendering
+        try:
+            import matplotlib
+            matplotlib.use('agg')
+            self.ip.run_line_magic('matplotlib', 'inline')
+        except (ImportError, ModuleNotFoundError):
+            pass  # matplotlib not installed, skip
+        except Exception:
+            pass  # matplotlib inline setup failed, continue without it
 
     def execute_cell(self, code: str) -> ExecutionResult:
         """
@@ -175,6 +184,14 @@ class NotebookKernel:
                 "evalue": str(e),
                 "traceback": [],
             })
+
+        # Auto-close matplotlib figures to prevent memory leaks
+        try:
+            import matplotlib.pyplot as plt
+            if plt.get_fignums():
+                plt.close('all')
+        except (ImportError, Exception):
+            pass
 
         exec_result = ExecutionResult(
             success=error is None,

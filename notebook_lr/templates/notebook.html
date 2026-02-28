@@ -22,6 +22,11 @@
   <!-- marked.js for markdown rendering -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
+  <!-- KaTeX for LaTeX rendering -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
   <!-- Custom CSS -->
   <link rel="stylesheet" href="/static/css/notebook.css">
 </head>
@@ -30,6 +35,7 @@
     <header id="notebook-header">
       <div class="header-left">
         <h1>notebook-lr</h1>
+        <span id="save-indicator" class="save-indicator save-saved" title="All changes saved">&#10003; Saved</span>
       </div>
       <div id="notebook-info"></div>
     </header>

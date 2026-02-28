@@ -69,8 +69,20 @@ NB.cells = (function () {
       NB.execution.executeCell(index);
     });
 
+    const collapseBtn = document.createElement('button');
+    collapseBtn.className = 'cell-collapse-btn';
+    collapseBtn.title = 'Collapse cell';
+    collapseBtn.innerHTML = '&#9660;'; // ▼
+    collapseBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const isCollapsed = cellDiv.classList.toggle('cell-collapsed');
+      collapseBtn.innerHTML = isCollapsed ? '&#9654;' : '&#9660;'; // ▶ or ▼
+      collapseBtn.title = isCollapsed ? 'Expand cell' : 'Collapse cell';
+    });
+
     gutter.appendChild(execCount);
     gutter.appendChild(runBtn);
+    gutter.insertBefore(collapseBtn, gutter.firstChild);
 
     // Content
     const content = document.createElement('div');
@@ -154,6 +166,19 @@ NB.cells = (function () {
           previewEl.innerHTML = (typeof marked !== 'undefined')
             ? marked.parse(src)
             : src;
+          if (typeof renderMathInElement === 'function') {
+            try {
+              renderMathInElement(previewEl, {
+                delimiters: [
+                  {left: '$$', right: '$$', display: true},
+                  {left: '$', right: '$', display: false},
+                  {left: '\\(', right: '\\)', display: false},
+                  {left: '\\[', right: '\\]', display: true}
+                ],
+                throwOnError: false
+              });
+            } catch(e) { /* KaTeX not loaded */ }
+          }
           previewEl.style.display = '';
           editorEl.style.display = 'none';
           previewBtn.textContent = 'Edit';
@@ -194,6 +219,19 @@ NB.cells = (function () {
           previewEl.innerHTML = (typeof marked !== 'undefined')
             ? marked.parse(src)
             : src;
+          if (typeof renderMathInElement === 'function') {
+            try {
+              renderMathInElement(previewEl, {
+                delimiters: [
+                  {left: '$$', right: '$$', display: true},
+                  {left: '$', right: '$', display: false},
+                  {left: '\\(', right: '\\)', display: false},
+                  {left: '\\[', right: '\\]', display: true}
+                ],
+                throwOnError: false
+              });
+            } catch(e) { /* KaTeX not loaded */ }
+          }
           previewEl.style.display = '';
           editorEl.style.display = 'none';
           const previewBtn = cellDiv.querySelector('.preview-toggle-btn');

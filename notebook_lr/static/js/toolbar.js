@@ -40,6 +40,13 @@ NB.toolbar = {
     });
 
     NB.toolbar.initKeyboardShortcuts();
+
+    // Monitor cell changes for autosave indicator
+    const origUpdateCell = NB.api.updateCell;
+    NB.api.updateCell = async function() {
+      NB.fileops.markDirty();
+      return origUpdateCell.apply(NB.api, arguments);
+    };
   },
 
   async updateInfo() {
@@ -99,11 +106,13 @@ NB.toolbar = {
       // Ctrl+S / Cmd+S: Save
       if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key === 's') {
         e.preventDefault();
+        NB.fileops._updateIndicator('saving');
         NB.fileops.save(false);
       }
       // Ctrl+Shift+S: Save with session
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'S') {
         e.preventDefault();
+        NB.fileops._updateIndicator('saving');
         NB.fileops.save(true);
       }
     });
