@@ -2587,6 +2587,8 @@ button:focus-visible {
 /* Debug Tree */
 .debug-tree {
   padding: 8px 0;
+  font-family: 'Roboto Mono', 'Consolas', 'Monaco', monospace;
+  font-size: 12px;
 }
 
 .debug-node {
@@ -2597,10 +2599,11 @@ button:focus-visible {
 .debug-node-header {
   display: flex;
   align-items: flex-start;
-  padding: 8px 16px;
+  padding: 6px 12px;
   cursor: pointer;
   border-left: 3px solid transparent;
   transition: background 0.15s;
+  white-space: pre;
 }
 
 .debug-node-header:hover {
@@ -2610,6 +2613,22 @@ button:focus-visible {
 .debug-node-header.selected {
   background: #37373d;
   border-left-color: #007acc;
+}
+
+/* Tree visualization */
+.debug-tree-prefix {
+  color: #6e6e6e;
+  font-family: 'Roboto Mono', 'Consolas', 'Monaco', monospace;
+  white-space: pre;
+  user-select: none;
+}
+
+.debug-tree-connector {
+  color: #6e6e6e;
+  font-family: 'Roboto Mono', 'Consolas', 'Monaco', monospace;
+  white-space: pre;
+  user-select: none;
+  min-width: 24px;
 }
 
 .debug-toggle {

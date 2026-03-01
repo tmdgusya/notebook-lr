@@ -202,8 +202,9 @@ NB.debugPanel = (function() {
     }
     
     treeEl.innerHTML = '';
-    eventsToShow.slice().reverse().forEach(event => {
-      treeEl.appendChild(renderNode(event, 0));
+    eventsToShow.slice().reverse().forEach((event, index) => {
+      const isLast = index === eventsToShow.length - 1;
+      treeEl.appendChild(renderNode(event, "", isLast, 0));
     });
     
     // Show detail for selected event
@@ -225,9 +226,13 @@ NB.debugPanel = (function() {
   }
   
   /**
-   * Render a single node
+   * Render a single node with tree connectors
+   * @param {Object} event - The event to render
+   * @param {string} prefix - Prefix string for tree lines (│   or    )
+   * @param {boolean} isLast - Whether this node is the last child
+   * @param {number} depth - Depth level for indentation calculation
    */
-  function renderNode(event, depth) {
+  function renderNode(event, prefix = "", isLast = true, depth = 0) {
     const node = document.createElement('div');
     node.className = 'debug-node';
     if (!collapsedNodes.has(event.id)) {
@@ -242,13 +247,22 @@ NB.debugPanel = (function() {
     if (selectedEventId === event.id) {
       header.classList.add('selected');
     }
-    header.style.paddingLeft = (16 + depth * 20) + 'px';
+    header.style.paddingLeft = '12px';
     
-    // Toggle button
+    // Tree connector line (├── or └──)
+    const connector = document.createElement('span');
+    connector.className = 'debug-tree-connector';
+    if (depth === 0) {
+      connector.textContent = ''; // Root node has no connector
+    } else {
+      connector.textContent = isLast ? '└── ' : '├── ';
+    }
+    
+    // Toggle button for expanding/collapsing
     const children = NB.agentLogger.getChildren(event.id);
     const toggle = document.createElement('span');
     toggle.className = 'debug-toggle' + (children.length === 0 ? ' leaf' : '');
-    toggle.textContent = children.length > 0 ? (collapsedNodes.has(event.id) ? '▶' : '▼') : '';
+    toggle.textContent = children.length > 0 ? (collapsedNodes.has(event.id) ? '▶ ' : '▼ ') : '';
     toggle.addEventListener('click', (e) => {
       e.stopPropagation();
       toggleNode(event.id);
@@ -289,6 +303,16 @@ NB.debugPanel = (function() {
     info.appendChild(summary);
     info.appendChild(meta);
     
+    // Build tree prefix section
+    const treePrefix = document.createElement('span');
+    treePrefix.className = 'debug-tree-prefix';
+    treePrefix.textContent = prefix;
+    
+    // Assemble header: [prefix][connector][toggle][status][info]
+    if (depth > 0) {
+      header.appendChild(treePrefix);
+    }
+    header.appendChild(connector);
     header.appendChild(toggle);
     header.appendChild(status);
     header.appendChild(info);
@@ -297,19 +321,27 @@ NB.debugPanel = (function() {
     
     node.appendChild(header);
     
-    // Children
-    if (children.length > 0) {
+    // Children - pass down the prefix for tree lines
+    if (children.length > 0 && !collapsedNodes.has(event.id)) {
       const childrenContainer = document.createElement('div');
       childrenContainer.className = 'debug-children';
       
+      // Calculate child prefix: add │ if current node is not last, else spaces
+      const childPrefix = prefix + (isLast ? '    ' : '│   ');
+      
       const filter = getFilter();
-      children.forEach(child => {
-        if (!filter.type && !filter.status || matchesFilter(child, filter)) {
-          childrenContainer.appendChild(renderNode(child, depth + 1));
-        }
+      const visibleChildren = children.filter(child => {
+        return !filter.type && !filter.status || matchesFilter(child, filter);
       });
       
-      node.appendChild(childrenContainer);
+      visibleChildren.forEach((child, index) => {
+        const childIsLast = index === visibleChildren.length - 1;
+        childrenContainer.appendChild(renderNode(child, childPrefix, childIsLast, depth + 1));
+      });
+      
+      if (visibleChildren.length > 0) {
+        node.appendChild(childrenContainer);
+      }
     }
     
     return node;

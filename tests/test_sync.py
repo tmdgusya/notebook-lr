@@ -151,12 +151,12 @@ class TestMcpAutoSave:
         assert saved.cells[0].source == "keep"
 
     def test_no_auto_save_without_path(self, monkeypatch):
-        """Mutations without NOTEBOOK_LR_PATH don't write files or raise errors."""
+        """Mutations without NOTEBOOK_LR_PATH raise RuntimeError to prevent silent data loss."""
         monkeypatch.delenv("NOTEBOOK_LR_PATH", raising=False)
 
         get_notebook()
-        add_cell(source="test")
-        update_cell_source(index=0, source="updated")
+        with pytest.raises(RuntimeError, match="NOT saved to disk"):
+            add_cell(source="test")
 
         assert mcp_module._notebook_path is None
 

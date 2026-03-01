@@ -327,6 +327,8 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
     # ------------------------------------------------------------------ #
     # Comment helpers & routes
     # ------------------------------------------------------------------ #
+    import logging
+    logger = logging.getLogger(__name__)
 
     def _find_cell_by_id(cell_id: str) -> Optional[Cell]:
         for cell in notebook.cells:
@@ -364,22 +366,25 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
         """Build environment dict for subprocess based on provider."""
         import os
         env = os.environ.copy()
-        cmd_map = {"glm": "g", "kimi": "k", "claude": "c"}
+
+        if provider == "claude":
+            # claude uses default env; clean up any overrides that leaked
+            # from the parent process environment
+            for k in ["ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_BASE_URL",
+                       "ANTHROPIC_MODEL", "ANTHROPIC_VERSION"]:
+                env.pop(k, None)
+            return env
+
+        # Non-claude providers need gt.sh for token switching
+        cmd_map = {"glm": "g", "kimi": "k"}
         cmd = cmd_map.get(provider, "c")
         gt_vars = _load_gt_env(cmd)
         env.update(gt_vars)
 
         # Validate that the token is not a gt.sh placeholder
         token = env.get("ANTHROPIC_AUTH_TOKEN", "")
-        if provider != "claude" and token in _PLACEHOLDER_TOKENS:
+        if token in _PLACEHOLDER_TOKENS:
             raise ValueError(f"{provider} API 토큰이 설정되지 않았습니다. ANTHROPIC_AUTH_TOKEN을 확인해주세요.")
-
-        # claude mode: gt.sh already unsets overrides, but clean up any
-        # that leaked from the parent process environment
-        if provider == "claude":
-            for k in ["ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_BASE_URL",
-                       "ANTHROPIC_MODEL", "ANTHROPIC_VERSION"]:
-                env.pop(k, None)
 
         return env
 
@@ -445,20 +450,15 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
 
 사용자의 질문: {user_comment}{context_section}
 
-## notebook-lr MCP 도구 안내
+## 중요 안내
 
-Claude는 다음 notebook-lr MCP 도구를 사용할 수 있습니다:
-- get_cell_source: 셀 소스 코드 가져오기
-- update_cell_source: 셀 소스 코드 수정
-- add_cell: 새 셀 추가
-- delete_cell: 셀 삭제
-- get_cell: 셀 정보 가져오기
-- list_cells: 모든 셀 목록 가져오기
-- get_notebook_info: 노트북 정보 가져오기
-- get_cell_comments: 셀 코멘트 가져오기
-- get_notebook_context: 노트북 전체 컨텍스트 가져오기
+당신은 노트북을 직접 수정할 수 없습니다. MCP 도구에 접근할 수 없습니다.
+절대로 "수정했습니다", "분할했습니다", "변경을 적용했습니다" 등 직접 수정한 것처럼 답변하지 마세요.
 
-사용자가 코드 변환, 리팩토링, 셀 추가/수정 등을 요청하면 notebook-lr MCP 도구를 사용하여 직접 노트북을 수정할 수 있습니다.
+대신 다음과 같이 답변해주세요:
+- 코드에 대한 설명, 분석, 개선 제안
+- 수정이 필요한 경우: 수정된 코드를 코드 블록으로 제시하고, 사용자가 직접 적용하도록 안내
+- 셀 분할이 필요한 경우: 각 셀의 코드를 별도 코드 블록으로 제시
 
 선택된 코드에 대해 교육적인 답변을 한국어로 제공해주세요."""
 
@@ -467,16 +467,23 @@ Claude는 다음 notebook-lr MCP 도구를 사용할 수 있습니다:
         except ValueError as e:
             return f"Error: {e}"
 
+        logger.info("AI call started: provider=%s", provider)
         try:
             result = subprocess.run(
                 ['claude', '-p', prompt, '--dangerously-skip-permissions'],
                 capture_output=True, text=True, timeout=120, env=env
             )
-            return result.stdout.strip() if result.returncode == 0 else f"Error: {result.stderr.strip()}"
+            if result.returncode == 0:
+                logger.info("AI call completed: provider=%s, response_length=%d", provider, len(result.stdout))
+                return result.stdout.strip()
+            else:
+                logger.error("AI call failed: provider=%s, error=%s", provider, result.stderr.strip())
+                return f"Error: {result.stderr.strip()}"
         except subprocess.TimeoutExpired:
+            logger.error("AI call timeout: provider=%s", provider)
             return "Error: AI 응답 시간 초과"
         except FileNotFoundError:
-            return "Error: claude CLI를 찾을 수 없습니다"
+            return "Error: claude CLI를 찾을 수 없습니다. 'npm install -g @anthropic-ai/claude-code'로 설치해주세요."
 
     @app.route("/api/cell/comment/add", methods=["POST"])
     def api_cell_comment_add():
@@ -494,7 +501,7 @@ Claude는 다음 notebook-lr MCP 도구를 사용할 수 있습니다:
         try:
             _build_provider_env(provider)
         except ValueError as e:
-            return jsonify({"ok": False, "error": str(e)})
+            return jsonify({"ok": False, "error": str(e)}), 400
 
         comment = Comment(
             from_line=int(data.get("from_line", 0)),

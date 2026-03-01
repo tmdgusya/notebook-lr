@@ -84,13 +84,29 @@ def _maybe_reload() -> None:
         pass
 
 
-def _auto_save() -> None:
-    """Save notebook to file after mutations."""
+def _auto_save() -> bool:
+    """Save notebook to file after mutations.
+
+    Returns:
+        True if saved to disk, False if no file path configured.
+    """
     global _notebook_mtime
     if _notebook_path is None or _notebook is None:
-        return
+        return False
     _notebook.save(Path(_notebook_path))
     _notebook_mtime = os.path.getmtime(_notebook_path)
+    return True
+
+
+def _check_persisted(saved: bool) -> None:
+    """Raise an error if mutations were not persisted to disk."""
+    if not saved:
+        raise RuntimeError(
+            "Cell was modified in memory but NOT saved to disk. "
+            "The notebook file path is not configured. "
+            "Set the NOTEBOOK_LR_PATH environment variable to a valid .nblr file path "
+            "to enable persistence and web server synchronization."
+        )
 
 
 def get_kernel() -> NotebookKernel:
@@ -169,7 +185,7 @@ def update_cell_source(index: int, source: str) -> bool:
     notebook = get_notebook()
     _validate_index(index)
     notebook.update_cell(index, source=source)
-    _auto_save()
+    _check_persisted(_auto_save())
     return True
 
 
@@ -213,7 +229,7 @@ def add_cell(
         new_idx = len(notebook.cells)
 
     notebook.insert_cell(new_idx, cell)
-    _auto_save()
+    _check_persisted(_auto_save())
 
     return _cell_to_output(cell, new_idx)
 
@@ -234,7 +250,7 @@ def delete_cell(index: int) -> bool:
     notebook = get_notebook()
     _validate_index(index)
     notebook.remove_cell(index)
-    _auto_save()
+    _check_persisted(_auto_save())
     return True
 
 
@@ -265,7 +281,7 @@ def move_cell(index: int, direction: str) -> dict:
             notebook.cells[index - 1],
             notebook.cells[index],
         )
-        _auto_save()
+        _check_persisted(_auto_save())
         return {"ok": True, "new_index": index - 1}
     else:  # direction == "down"
         if index == len(notebook.cells) - 1:
@@ -274,7 +290,7 @@ def move_cell(index: int, direction: str) -> dict:
             notebook.cells[index + 1],
             notebook.cells[index],
         )
-        _auto_save()
+        _check_persisted(_auto_save())
         return {"ok": True, "new_index": index + 1}
 
 

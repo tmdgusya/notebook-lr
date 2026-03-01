@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "notebook-lr": {
+      "command": "/home/roach/.local/bin/uv",
+      "args": [
+        "run",
+        "--directory",
+        "/home/roach/notebook-lr",
+        "python",
+        "-m",
+        "notebook_lr.mcp_server"
+      ]
+    }
+  }
+}
