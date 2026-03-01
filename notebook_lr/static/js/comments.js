@@ -81,7 +81,10 @@ NB.comments = (function () {
         if (sel.trim().length > 0) {
           var from = cm.getCursor('from');
           var to = cm.getCursor('to');
-          var coords = cm.charCoords(to, 'window');
+          // Determine the end of selection in document order (visually bottom)
+          // When dragging bottom-to-top, 'to' is at the top, so we need to use 'from'
+          var endPos = (to.line > from.line || (to.line === from.line && to.ch > from.ch)) ? to : from;
+          var coords = cm.charCoords(endPos, 'window');
           currentSelection = {
             cm: cm,
             cellId: cellId,
