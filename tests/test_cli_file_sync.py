@@ -58,3 +58,11 @@ def test_editor_has_conflict_resolution_method():
     editor = NotebookEditor(nb)
     
     assert hasattr(editor, '_resolve_conflict')
+
+
+def test_editor_has_handle_external_changes_method():
+    """Test that editor has external changes handler."""
+    nb = Notebook.new()
+    editor = NotebookEditor(nb)
+    
+    assert hasattr(editor, '_handle_external_changes')

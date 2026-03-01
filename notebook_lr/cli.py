@@ -135,6 +135,34 @@ class NotebookEditor:
         except Exception as e:
             self._set_message(f"[red]Error reloading: {e}[/red]")
 
+    def _handle_external_changes(self) -> bool:
+        """Handle external file changes.
+        
+        Returns:
+            True if changes were handled (reload or keep)
+            False if no changes detected
+        """
+        if not self._check_external_changes():
+            return False
+        
+        if self.modified:
+            # Conflict: both external and local changes
+            choice = self._resolve_conflict()
+            
+            if choice == 'reload':
+                self._reload_from_disk()
+            elif choice == 'keep':
+                # Mark external changes as acknowledged, keep local
+                if self.file_watcher:
+                    self.file_watcher.acknowledge_changes()
+                self._set_message("[yellow]Keeping your changes. Save to overwrite.[/yellow]")
+            # 'cancel' - do nothing, will prompt again next cycle
+        else:
+            # No local changes - auto-reload
+            self._reload_from_disk()
+        
+        return True
+
     def display_header(self):
         """Display the header with notebook info."""
         name = self.notebook.metadata.get("name", "Untitled")
