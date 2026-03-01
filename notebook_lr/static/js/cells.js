@@ -267,6 +267,20 @@ NB.cells = (function () {
       cm.refresh();
     }, 0);
 
+    // Markdown cells with content default to preview mode
+    if (cellType === 'markdown' && value.trim().length > 0) {
+      previewActive = true;
+      previewEl.innerHTML = (typeof marked !== 'undefined')
+        ? marked.parse(value)
+        : value;
+      renderKaTeX(previewEl);
+      renderMermaid(previewEl);
+      previewEl.style.display = '';
+      editorEl.style.display = 'none';
+      const previewBtn = cellDiv.querySelector('.preview-toggle-btn');
+      if (previewBtn) { previewBtn.textContent = 'Edit'; previewBtn.classList.add('active'); }
+    }
+
     // Display existing outputs
     if (cell.outputs && cell.outputs.length > 0) {
       NB.execution.displayOutputs(outputEl, cell.outputs);

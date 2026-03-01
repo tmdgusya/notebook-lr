@@ -326,3 +326,84 @@ class TestMermaidNotebookModel:
         assert "# Architecture" in cell.source
         assert "graph TD" in cell.source
         assert "sequenceDiagram" in cell.source
+
+
+# ---------------------------------------------------------------------------
+# Markdown default preview mode tests
+# ---------------------------------------------------------------------------
+
+class TestMarkdownDefaultPreviewMode:
+    """Verify markdown cells default to preview mode when they have content."""
+
+    def _read_cells_js(self):
+        js_path = os.path.join(
+            os.path.dirname(__file__),
+            "..", "notebook_lr", "static", "js", "cells.js"
+        )
+        with open(js_path) as f:
+            return f.read()
+
+    def test_default_preview_logic_exists(self):
+        """cells.js should have logic to default markdown cells to preview."""
+        js = self._read_cells_js()
+        assert "default to preview mode" in js.lower() or \
+               "default to preview" in js.lower(), \
+            "cells.js should have a comment about defaulting to preview mode"
+
+    def test_default_preview_checks_content(self):
+        """Default preview should only activate when cell has content."""
+        js = self._read_cells_js()
+        # Should check value is non-empty before activating preview
+        assert "value.trim().length > 0" in js or \
+               "value.trim()" in js, \
+            "Should check that cell content is non-empty before preview"
+
+    def test_default_preview_sets_preview_active(self):
+        """Default preview should set previewActive = true."""
+        js = self._read_cells_js()
+        # Find the default preview section
+        default_pos = js.find("default to preview")
+        assert default_pos >= 0, "Default preview comment not found"
+        section = js[default_pos:default_pos + 500]
+        assert "previewActive = true" in section
+
+    def test_default_preview_shows_preview_hides_editor(self):
+        """Default preview should show previewEl and hide editorEl."""
+        js = self._read_cells_js()
+        default_pos = js.find("default to preview")
+        assert default_pos >= 0
+        section = js[default_pos:default_pos + 500]
+        assert "previewEl.style.display = ''" in section
+        assert "editorEl.style.display = 'none'" in section
+
+    def test_default_preview_renders_markdown(self):
+        """Default preview should parse markdown with marked."""
+        js = self._read_cells_js()
+        default_pos = js.find("default to preview")
+        assert default_pos >= 0
+        section = js[default_pos:default_pos + 500]
+        assert "marked.parse" in section
+
+    def test_default_preview_renders_katex_and_mermaid(self):
+        """Default preview should call renderKaTeX and renderMermaid."""
+        js = self._read_cells_js()
+        default_pos = js.find("default to preview")
+        assert default_pos >= 0
+        section = js[default_pos:default_pos + 500]
+        assert "renderKaTeX" in section
+        assert "renderMermaid" in section
+
+    def test_default_preview_updates_button_text(self):
+        """Default preview should set button text to 'Edit'."""
+        js = self._read_cells_js()
+        default_pos = js.find("default to preview")
+        assert default_pos >= 0
+        section = js[default_pos:default_pos + 500]
+        assert "'Edit'" in section or '"Edit"' in section
+
+    def test_empty_markdown_cell_stays_in_edit_mode(self):
+        """Empty markdown cells should NOT default to preview mode."""
+        js = self._read_cells_js()
+        # The condition checks value.trim().length > 0, so empty cells stay in edit
+        assert "value.trim().length > 0" in js, \
+            "Should only preview non-empty markdown cells"
