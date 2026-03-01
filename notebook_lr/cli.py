@@ -19,6 +19,7 @@ from rich.status import Status
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
 
 from notebook_lr import NotebookKernel, Notebook, Cell, CellType, SessionManager
+from notebook_lr.file_watcher import FileWatcher
 from notebook_lr.utils import format_output, format_rich_output, get_cell_type_icon, get_cell_status
 
 
@@ -37,6 +38,7 @@ class NotebookEditor:
         self.modified = False
         self._deleted_cells: list[tuple[int, Cell]] = []
         self._status_message = ""
+        self.file_watcher: Optional[FileWatcher] = None
 
     def _set_message(self, message: str):
         """Set a status message to display on next render."""
