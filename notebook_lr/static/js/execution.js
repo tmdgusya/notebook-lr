@@ -5,12 +5,23 @@ NB.execution = {
 
   async executeCell(index) {
     const source = NB.cells.getEditorContent(index);
+    const cellEl = document.querySelector('.cell[data-index="' + index + '"]');
+    const cellId = cellEl ? cellEl.getAttribute('data-id') : null;
 
     // Track execution start time
     NB.execution._executionTimes[index] = { startTime: Date.now() };
 
     // Show running state
     NB.execution.showRunning(index);
+
+    // Log cell execution start
+    let logEventId = null;
+    if (NB.agentLogger) {
+      logEventId = NB.agentLogger.logStart('cell_execute', {
+        cellIndex: index,
+        cellId: cellId,
+      });
+    }
 
     try {
       const result = await NB.api.executeCell(index, source);
@@ -29,6 +40,17 @@ NB.execution = {
         NB.execution._addExecutionTimeToCell(index, execInfo.duration);
       }
       
+      // Log cell execution success
+      if (logEventId && NB.agentLogger) {
+        NB.agentLogger.logComplete(logEventId, NB.agentLogger.EventStatus.SUCCESS, {
+          cellIndex: index,
+          cellId: cellId,
+          execution_count: result.execution_count,
+          outputCount: result.outputs ? result.outputs.length : 0,
+          duration: execInfo ? execInfo.duration : null,
+        });
+      }
+      
       NB.toolbar.updateInfo();
     } catch (err) {
       NB.cells.updateCellOutput(index, [{
@@ -36,6 +58,16 @@ NB.execution = {
         ename: 'NetworkError',
         evalue: err.message
       }], null);
+      
+      // Log cell execution error
+      if (logEventId && NB.agentLogger) {
+        NB.agentLogger.logError(logEventId, err, {
+          cellIndex: index,
+          cellId: cellId,
+          errorType: 'NetworkError',
+        });
+      }
+      
       NB.toolbar.showError('Cell execution failed: ' + err.message);
     } finally {
       NB.execution.hideRunning(index);
@@ -71,6 +103,19 @@ NB.execution = {
 
   async executeAll() {
     const startTime = Date.now();
+    
+    // Get cell count for logging
+    const cellElements = document.querySelectorAll('.cell');
+    const cellCount = cellElements.length;
+    
+    // Log execute all start
+    let logEventId = null;
+    if (NB.agentLogger) {
+      logEventId = NB.agentLogger.logStart('execute_all', {
+        cellCount: cellCount,
+      });
+    }
+    
     try {
       const result = await NB.api.executeAll();
       const duration = Date.now() - startTime;
@@ -79,6 +124,14 @@ NB.execution = {
       const nb = await NB.api.getNotebook();
       NB.cells.renderAll(nb.cells);
       NB.toolbar.updateInfo();
+      
+      // Log execute all success
+      if (logEventId && NB.agentLogger) {
+        NB.agentLogger.logComplete(logEventId, NB.agentLogger.EventStatus.SUCCESS, {
+          cellCount: cellCount,
+          duration: duration,
+        });
+      }
       
       // Show success message with timing
       let durationText;
@@ -89,6 +142,14 @@ NB.execution = {
       }
       NB.toolbar.showSuccess('All cells executed in ' + durationText);
     } catch (err) {
+      // Log execute all error
+      if (logEventId && NB.agentLogger) {
+        NB.agentLogger.logError(logEventId, err, {
+          cellCount: cellCount,
+          errorType: 'ExecutionError',
+        });
+      }
+      
       NB.toolbar.showError('Execute all failed: ' + err.message);
     }
   },
