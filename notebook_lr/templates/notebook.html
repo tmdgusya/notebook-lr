@@ -85,9 +85,11 @@
         <span class="icon">&#128465;</span> <span class="btn-label">Clear</span>
       </button>
       <div class="toolbar-spacer"></div>
+      {% if debug_panel_enabled %}
       <button id="debug-btn" class="toolbar-btn" title="Agent Debug Panel">
         <span class="icon">&#128027;</span> <span class="btn-label">Debug</span>
       </button>
+      {% endif %}
       <button id="help-btn" class="toolbar-btn" title="Keyboard Shortcuts (?)" style="margin-left: auto;">
         <span class="icon">&#63;</span> <span class="btn-label">Help</span>
       </button>
@@ -105,6 +107,7 @@
       <div id="variables-content"></div>
     </div>
 
+    {% if debug_panel_enabled %}
     <!-- Debug Panel -->
     <div id="debug-panel" class="panel hidden">
       <div class="panel-header">
@@ -127,6 +130,9 @@
             <option value="ai_call">AI Calls</option>
             <option value="api_call">API Calls</option>
             <option value="comment_add">Comments</option>
+            <option value="file_change_detected">File Changes</option>
+            <option value="file_auto_reload">Auto Reload</option>
+            <option value="file_conflict">Conflicts</option>
           </select>
           <select id="debug-filter-status">
             <option value="">All Status</option>
@@ -141,6 +147,7 @@
         <div class="debug-tree"></div>
       </div>
     </div>
+    {% endif %}
 
     <!-- Keyboard Shortcuts Modal -->
     <div id="shortcuts-modal" class="modal hidden">
@@ -175,10 +182,12 @@
               <div class="shortcut-item"><kbd>Ctrl</kbd>+<kbd>S</kbd> Save</div>
               <div class="shortcut-item"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> Save with session</div>
             </div>
+            {% if debug_panel_enabled %}
             <div class="shortcut-section">
               <h4>Debug</h4>
               <div class="shortcut-item"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd> Toggle Debug Panel</div>
             </div>
+            {% endif %}
           </div>
         </div>
       </div>
@@ -187,14 +196,17 @@
 
   <!-- JS modules loaded in dependency order -->
   <script src="/static/js/api.js"></script>
+  {% if debug_panel_enabled %}
   <script src="/static/js/agent-logger.js"></script>
   <script src="/static/js/debug-panel.js"></script>
+  {% endif %}
   <script src="/static/js/editor.js"></script>
   <script src="/static/js/cells.js"></script>
   <script src="/static/js/comments.js"></script>
   <script src="/static/js/execution.js"></script>
   <script src="/static/js/toolbar.js"></script>
   <script src="/static/js/fileops.js"></script>
+  <script src="/static/js/file-sync.js"></script>
   <script src="/static/js/app.js"></script>
 </body>
 </html>

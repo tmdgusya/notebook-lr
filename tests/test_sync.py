@@ -287,7 +287,7 @@ class TestWebCheckUpdates:
         assert resp.get_json()["changed"] is False
 
     def test_detects_external_change(self, tmp_path):
-        """check-updates returns changed=true and new cells after external file modification."""
+        """check-updates returns changed=true after external file modification, reload fetches new cells."""
         path = _make_notebook_file(tmp_path, ["original"])
         nb = Notebook.load(path)
         nb.metadata["path"] = str(path)
@@ -300,13 +300,19 @@ class TestWebCheckUpdates:
         nb2.save(path)
         _bump_mtime(path)
 
+        # check-updates only reports change, does not reload
         resp = client.get("/api/notebook/check-updates")
         assert resp.status_code == 200
         data = resp.get_json()
         assert data["changed"] is True
-        assert "cells" in data
-        assert "metadata" in data
-        sources = [c["source"] for c in data["cells"]]
+
+        # explicit reload fetches new cells
+        reload_resp = client.post("/api/notebook/reload")
+        assert reload_resp.status_code == 200
+        reload_data = reload_resp.get_json()
+        assert "cells" in reload_data
+        assert "metadata" in reload_data
+        sources = [c["source"] for c in reload_data["cells"]]
         assert "added_externally = 1" in sources
 
     def test_no_change_when_no_path_set(self):
@@ -332,6 +338,31 @@ class TestWebCheckUpdates:
 
         first = client.get("/api/notebook/check-updates").get_json()
         assert first["changed"] is True
+
+        # Explicit reload updates mtime tracking
+        client.post("/api/notebook/reload")
+
+        second = client.get("/api/notebook/check-updates").get_json()
+        assert second["changed"] is False
+
+    def test_acknowledge_resets_change_detection(self, tmp_path):
+        """After acknowledging, next check returns changed=false without reloading."""
+        path = _make_notebook_file(tmp_path, ["v1"])
+        nb = Notebook.load(path)
+        nb.metadata["path"] = str(path)
+        client, nb_ref, kernel = _make_web_client(nb)
+
+        nb2 = Notebook.new()
+        nb2.insert_cell(0, Cell(type=CellType.CODE, source="v2"))
+        nb2.save(path)
+        _bump_mtime(path)
+
+        first = client.get("/api/notebook/check-updates").get_json()
+        assert first["changed"] is True
+
+        # Acknowledge without reload (keep mine)
+        ack = client.post("/api/notebook/acknowledge").get_json()
+        assert ack["acknowledged"] is True
 
         second = client.get("/api/notebook/check-updates").get_json()
         assert second["changed"] is False

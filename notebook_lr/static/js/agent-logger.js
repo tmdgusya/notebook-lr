@@ -23,6 +23,11 @@ NB.agentLogger = (function() {
     API_ERROR: 'api_error',       // API error
     COMMENT_ADD: 'comment_add',   // Comment creation started
     COMMENT_COMPLETE: 'comment_complete', // Comment creation done
+    FILE_CHANGE_DETECTED: 'file_change_detected', // External file change detected
+    FILE_AUTO_RELOAD: 'file_auto_reload',           // Auto-reload triggered
+    FILE_CONFLICT: 'file_conflict',                 // Conflict dialog shown
+    FILE_CONFLICT_RESOLVED: 'file_conflict_resolved', // User resolved conflict
+    FILE_POLL_ERROR: 'file_poll_error',             // Polling error occurred
   };
   
   const EventStatus = {

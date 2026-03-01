@@ -38,6 +38,11 @@ NB.app = {
         NB.cells.selectCell(0);
       }
 
+      // 6. Start file sync polling
+      if (NB.fileSync) {
+        NB.fileSync.start();
+      }
+
       console.log('notebook-lr ready (' + data.cells.length + ' cells)');
     } catch (err) {
       console.error('Failed to initialize:', err);

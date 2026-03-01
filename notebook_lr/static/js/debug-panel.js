@@ -500,6 +500,11 @@ NB.debugPanel = (function() {
       'api_error': 'API Error',
       'comment_add': 'Add Comment',
       'comment_complete': 'Comment Complete',
+      'file_change_detected': 'File Changed',
+      'file_auto_reload': 'Auto Reload',
+      'file_conflict': 'File Conflict',
+      'file_conflict_resolved': 'Conflict Resolved',
+      'file_poll_error': 'Poll Error',
     };
     return typeNames[type] || type;
   }
@@ -526,6 +531,9 @@ NB.debugPanel = (function() {
     }
     if (event.data.cellId) {
       return 'Cell: ' + event.data.cellId.substring(0, 8) + '...';
+    }
+    if (event.data.action) {
+      return event.data.action;
     }
     return '';
   }

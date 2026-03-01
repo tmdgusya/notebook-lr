@@ -85,9 +85,11 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
     # Routes
     # ------------------------------------------------------------------ #
 
+    debug_panel_enabled = os.environ.get("DEBUG_PANEL_ENABLED", "0") == "1"
+
     @app.route("/")
     def index():
-        return render_template("notebook.html")
+        return render_template("notebook.html", debug_panel_enabled=debug_panel_enabled)
 
     @app.route("/api/notebook", methods=["GET"])
     def api_notebook():
@@ -246,6 +248,7 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
         return jsonify({
             "status": "saved" + (" (with session)" if include_session else ""),
             "path": path,
+            "mtime": _last_file_mtime,
         })
 
     @app.route("/api/load", methods=["POST"])
@@ -308,7 +311,7 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
 
     @app.route("/api/notebook/check-updates", methods=["GET"])
     def api_check_updates():
-        nonlocal notebook, _last_file_mtime
+        nonlocal _last_file_mtime
         path = notebook.metadata.get("path")
         if not path or not os.path.isfile(path):
             return jsonify({"changed": False})
@@ -317,12 +320,33 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
         if current_mtime == _last_file_mtime:
             return jsonify({"changed": False})
 
-        # File changed externally - reload
+        # File changed externally - report only, do NOT reload
+        return jsonify({"changed": True})
+
+    @app.route("/api/notebook/reload", methods=["POST"])
+    def api_reload():
+        """Explicitly reload notebook from disk (used after user confirms reload)."""
+        nonlocal notebook, _last_file_mtime
+        path = notebook.metadata.get("path")
+        if not path or not os.path.isfile(path):
+            return jsonify({"error": "no file path available"}), 400
+
+        _last_file_mtime = os.path.getmtime(path)
         notebook = Notebook.load(Path(path))
         notebook.metadata["path"] = path
-        _last_file_mtime = current_mtime
         cells = [_cell_dict(c, i) for i, c in enumerate(notebook.cells)]
-        return jsonify({"changed": True, "cells": cells, "metadata": notebook.metadata})
+        return jsonify({"cells": cells, "metadata": notebook.metadata, "mtime": _last_file_mtime})
+
+    @app.route("/api/notebook/acknowledge", methods=["POST"])
+    def api_acknowledge():
+        """Acknowledge external change without reloading (user chose 'Keep mine')."""
+        nonlocal _last_file_mtime
+        path = notebook.metadata.get("path")
+        if not path or not os.path.isfile(path):
+            return jsonify({"error": "no file path available"}), 400
+
+        _last_file_mtime = os.path.getmtime(path)
+        return jsonify({"acknowledged": True, "mtime": _last_file_mtime})
 
     # ------------------------------------------------------------------ #
     # Comment helpers & routes

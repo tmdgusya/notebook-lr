@@ -2803,3 +2803,51 @@ button:focus-visible {
   scrollbar-width: thin;
   scrollbar-color: #555 transparent;
 }
+
+/* ============================================================
+   File Sync — Toast & Conflict Dialog
+   ============================================================ */
+
+.file-sync-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #323232;
+  color: #fff;
+  padding: 10px 24px;
+  border-radius: 6px;
+  font-size: 14px;
+  z-index: 10000;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  transition: opacity 0.3s;
+}
+
+.file-sync-toast.toast-error {
+  background: #d32f2f;
+}
+
+.file-sync-toast.toast-fade {
+  opacity: 0;
+}
+
+#file-conflict-modal .modal-overlay-block {
+  cursor: default;
+}
+
+#file-conflict-modal .modal-body p {
+  margin: 0 0 16px;
+  color: #ccc;
+  line-height: 1.5;
+}
+
+.conflict-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.conflict-actions .toolbar-btn {
+  padding: 8px 16px;
+  font-size: 14px;
+}

@@ -7,6 +7,7 @@ NB.fileops = {
       var result = await NB.api.save(includeSession);
       NB.fileops._isDirty = false;
       NB.fileops._updateIndicator('saved');
+      if (NB.fileSync) NB.fileSync.notifySaved();
       NB.toolbar.showSuccess(result.status || 'Saved successfully');
     } catch (err) {
       NB.fileops._updateIndicator('modified');
@@ -72,6 +73,7 @@ NB.fileops = {
           await NB.api.save(false);
           NB.fileops._isDirty = false;
           NB.fileops._updateIndicator('saved');
+          if (NB.fileSync) NB.fileSync.notifySaved();
         } catch(e) {
           NB.fileops._updateIndicator('modified');
         }
