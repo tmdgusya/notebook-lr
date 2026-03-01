@@ -85,6 +85,9 @@
         <span class="icon">&#128465;</span> <span class="btn-label">Clear</span>
       </button>
       <div class="toolbar-spacer"></div>
+      <button id="debug-btn" class="toolbar-btn" title="Agent Debug Panel">
+        <span class="icon">&#128027;</span> <span class="btn-label">Debug</span>
+      </button>
       <button id="help-btn" class="toolbar-btn" title="Keyboard Shortcuts (?)" style="margin-left: auto;">
         <span class="icon">&#63;</span> <span class="btn-label">Help</span>
       </button>
@@ -100,6 +103,43 @@
         <button id="close-vars-btn" class="close-btn">&times;</button>
       </div>
       <div id="variables-content"></div>
+    </div>
+
+    <!-- Debug Panel -->
+    <div id="debug-panel" class="panel hidden">
+      <div class="panel-header">
+        <h3>Agent Debug</h3>
+        <div class="panel-actions">
+          <button id="debug-clear-btn" class="panel-btn" title="Clear All">Clear</button>
+          <button id="debug-pause-btn" class="panel-btn" title="Pause/Resume">Pause</button>
+          <button id="close-debug-btn" class="close-btn">&times;</button>
+        </div>
+      </div>
+      <div class="panel-toolbar">
+        <div class="debug-stats">
+          <span class="stat-item"><span class="stat-label">Total:</span> <span id="debug-stat-total">0</span></span>
+          <span class="stat-item"><span class="stat-label">Errors:</span> <span id="debug-stat-errors">0</span></span>
+          <span class="stat-item"><span class="stat-label">Timeouts:</span> <span id="debug-stat-timeouts">0</span></span>
+        </div>
+        <div class="debug-filter">
+          <select id="debug-filter-type">
+            <option value="">All Types</option>
+            <option value="ai_call">AI Calls</option>
+            <option value="api_call">API Calls</option>
+            <option value="comment_add">Comments</option>
+          </select>
+          <select id="debug-filter-status">
+            <option value="">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="success">Success</option>
+            <option value="error">Error</option>
+            <option value="timeout">Timeout</option>
+          </select>
+        </div>
+      </div>
+      <div id="debug-content" class="panel-content">
+        <div class="debug-tree"></div>
+      </div>
     </div>
 
     <!-- Keyboard Shortcuts Modal -->
@@ -144,6 +184,7 @@
   <!-- JS modules loaded in dependency order -->
   <script src="/static/js/api.js"></script>
   <script src="/static/js/agent-logger.js"></script>
+  <script src="/static/js/debug-panel.js"></script>
   <script src="/static/js/editor.js"></script>
   <script src="/static/js/cells.js"></script>
   <script src="/static/js/comments.js"></script>
