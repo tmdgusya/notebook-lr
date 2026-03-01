@@ -2,6 +2,7 @@
 Web interface for notebook-lr using Flask.
 """
 
+import os
 import sys
 import tempfile
 from pathlib import Path
@@ -37,6 +38,11 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
                 f"Restored session with {len(checkpoint_info['restored_vars'])} variables"
             )
 
+    # Track file mtime for external change detection
+    _last_file_mtime = 0.0
+    if notebook.metadata.get("path") and os.path.isfile(notebook.metadata["path"]):
+        _last_file_mtime = os.path.getmtime(notebook.metadata["path"])
+
     tmpl_dir = Path(__file__).parent / "templates"
     static_dir = Path(__file__).parent / "static"
     app = Flask(__name__, template_folder=str(tmpl_dir), static_folder=str(static_dir))
@@ -67,6 +73,13 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
             else:
                 output_text += text + "\n"
         return output_text.strip(), error_text.strip()
+
+    def _auto_save_if_path():
+        nonlocal _last_file_mtime
+        path = notebook.metadata.get("path")
+        if path:
+            notebook.save(Path(path))
+            _last_file_mtime = os.path.getmtime(path)
 
     # ------------------------------------------------------------------ #
     # Routes
@@ -99,6 +112,7 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
             new_idx = len(notebook.cells)
 
         notebook.insert_cell(new_idx, cell)
+        _auto_save_if_path()
         return jsonify({"cell": _cell_dict(cell, new_idx), "index": new_idx})
 
     @app.route("/api/cell/delete", methods=["POST"])
@@ -107,6 +121,7 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
         index = int(data.get("index", -1))
         if 0 <= index < len(notebook.cells):
             notebook.remove_cell(index)
+            _auto_save_if_path()
             return jsonify({"ok": True})
         return jsonify({"ok": False, "error": "index out of range"}), 400
 
@@ -123,6 +138,7 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
                     notebook.cells[index],
                 )
                 new_index = index - 1
+                _auto_save_if_path()
                 return jsonify({"ok": True, "new_index": new_index})
         elif direction == "down":
             if 0 <= index < len(notebook.cells) - 1:
@@ -131,6 +147,7 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
                     notebook.cells[index],
                 )
                 new_index = index + 1
+                _auto_save_if_path()
                 return jsonify({"ok": True, "new_index": new_index})
 
         return jsonify({"ok": False, "error": "cannot move cell in that direction"}), 400
@@ -142,6 +159,7 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
         source = data.get("source", "")
         if 0 <= index < len(notebook.cells):
             notebook.cells[index].source = source
+            _auto_save_if_path()
             return jsonify({"ok": True})
         return jsonify({"ok": False, "error": "index out of range"}), 400
 
@@ -169,6 +187,7 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
         result = kernel.execute_cell(cell.source)
         cell.outputs = result.outputs
         cell.execution_count = result.execution_count
+        _auto_save_if_path()
 
         output_text, error_text = _format_outputs(result.outputs)
         return jsonify({
@@ -206,6 +225,7 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
 
     @app.route("/api/save", methods=["POST"])
     def api_save():
+        nonlocal _last_file_mtime
         data = request.get_json(force=True) or {}
         include_session = bool(data.get("include_session", False))
         path = notebook.metadata.get("path", "notebook.nblr")
@@ -222,6 +242,7 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
         else:
             notebook.save(Path(path))
 
+        _last_file_mtime = os.path.getmtime(path)
         return jsonify({
             "status": "saved" + (" (with session)" if include_session else ""),
             "path": path,
@@ -229,7 +250,7 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
 
     @app.route("/api/load", methods=["POST"])
     def api_load():
-        nonlocal notebook
+        nonlocal notebook, _last_file_mtime
         if "file" not in request.files:
             return jsonify({"error": "no file provided"}), 400
 
@@ -245,6 +266,7 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
         notebook = Notebook.load(tmp_path)
         notebook.metadata["path"] = file.filename
         tmp_path.unlink(missing_ok=True)
+        _last_file_mtime = 0.0
 
         cells = [_cell_dict(c, i) for i, c in enumerate(notebook.cells)]
         return jsonify({"cells": cells, "metadata": notebook.metadata})
@@ -283,6 +305,24 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
             "md_count": md_count,
             "executed_count": executed_count,
         })
+
+    @app.route("/api/notebook/check-updates", methods=["GET"])
+    def api_check_updates():
+        nonlocal notebook, _last_file_mtime
+        path = notebook.metadata.get("path")
+        if not path or not os.path.isfile(path):
+            return jsonify({"changed": False})
+
+        current_mtime = os.path.getmtime(path)
+        if current_mtime == _last_file_mtime:
+            return jsonify({"changed": False})
+
+        # File changed externally - reload
+        notebook = Notebook.load(Path(path))
+        notebook.metadata["path"] = path
+        _last_file_mtime = current_mtime
+        cells = [_cell_dict(c, i) for i, c in enumerate(notebook.cells)]
+        return jsonify({"changed": True, "cells": cells, "metadata": notebook.metadata})
 
     # ------------------------------------------------------------------ #
     # Comment helpers & routes
@@ -343,8 +383,54 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
 
         return env
 
-    def _call_ai(cell_source: str, selected_text: str, user_comment: str, provider: str = "claude") -> str:
+    def _build_comment_context(nb, cell: Cell, cell_id: str) -> str:
+        """Build rich context string about the cell and its surroundings."""
+        # Find cell index
+        index = None
+        for i, c in enumerate(nb.cells):
+            if c.id == cell_id:
+                index = i
+                break
+        total = len(nb.cells)
+
+        lines = []
+        if index is not None:
+            lines.append(f"이 코멘트는 셀 #{index + 1} (총 {total}개 중)에서 작성되었습니다.")
+        lines.append(f"셀 유형: {cell.type.value}")
+
+        # Neighboring cells summary
+        def cell_summary(c: Cell, label: str) -> str:
+            src_lines = c.source.splitlines()[:3]
+            preview = "\n".join(src_lines)
+            return f"{label} (유형: {c.type.value}):\n{preview}"
+
+        if index is not None and index > 0:
+            prev_cell = nb.cells[index - 1]
+            lines.append(cell_summary(prev_cell, "이전 셀"))
+        if index is not None and index < total - 1:
+            next_cell = nb.cells[index + 1]
+            lines.append(cell_summary(next_cell, "다음 셀"))
+
+        # Cell outputs
+        if cell.outputs:
+            outputs_repr = repr(cell.outputs)
+            if len(outputs_repr) > 500:
+                outputs_repr = outputs_repr[:500] + "..."
+            lines.append(f"셀 출력:\n{outputs_repr}")
+
+        # Other comments on same cell
+        other_comments = [c for c in cell.comments]
+        if other_comments:
+            lines.append("이 셀의 기존 코멘트:")
+            for cm in other_comments:
+                lines.append(f"  - [{cm.status}] 사용자: {cm.user_comment}")
+
+        return "\n\n".join(lines)
+
+    def _call_ai(cell_source: str, selected_text: str, user_comment: str, provider: str = "claude", context: str = "") -> str:
         import subprocess
+
+        context_section = f"\n\n## 노트북 컨텍스트\n{context}" if context else ""
 
         prompt = f"""다음은 Python 노트북 셀의 전체 코드입니다:
 
@@ -357,7 +443,22 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
 {selected_text}
 ```
 
-사용자의 질문: {user_comment}
+사용자의 질문: {user_comment}{context_section}
+
+## notebook-lr MCP 도구 안내
+
+Claude는 다음 notebook-lr MCP 도구를 사용할 수 있습니다:
+- get_cell_source: 셀 소스 코드 가져오기
+- update_cell_source: 셀 소스 코드 수정
+- add_cell: 새 셀 추가
+- delete_cell: 셀 삭제
+- get_cell: 셀 정보 가져오기
+- list_cells: 모든 셀 목록 가져오기
+- get_notebook_info: 노트북 정보 가져오기
+- get_cell_comments: 셀 코멘트 가져오기
+- get_notebook_context: 노트북 전체 컨텍스트 가져오기
+
+사용자가 코드 변환, 리팩토링, 셀 추가/수정 등을 요청하면 notebook-lr MCP 도구를 사용하여 직접 노트북을 수정할 수 있습니다.
 
 선택된 코드에 대해 교육적인 답변을 한국어로 제공해주세요."""
 
@@ -406,7 +507,8 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
             status="loading",
         )
 
-        ai_response = _call_ai(cell.source, comment.selected_text, comment.user_comment, provider)
+        ctx = _build_comment_context(notebook, cell, cell_id)
+        ai_response = _call_ai(cell.source, comment.selected_text, comment.user_comment, provider, context=ctx)
         if ai_response.startswith("Error:"):
             comment.status = "error"
         else:
@@ -415,6 +517,7 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
 
         cell.comments.append(comment)
         notebook._touch()
+        _auto_save_if_path()
 
         return jsonify({"ok": True, "comment": comment.model_dump()})
 
@@ -429,6 +532,7 @@ def launch_web(notebook: Optional[Notebook] = None, share: bool = False):
 
         cell.comments = [c for c in cell.comments if c.id != comment_id]
         notebook._touch()
+        _auto_save_if_path()
 
         return jsonify({"ok": True})
 

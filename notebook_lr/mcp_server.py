@@ -7,13 +7,14 @@ This module provides MCP tools for interacting with Jupyter-like notebooks:
 - Notebook Operations: get_notebook_info, save_notebook
 """
 
+import os
 from pathlib import Path
 from typing import Optional
 
 from mcp.server.fastmcp import FastMCP
 from pydantic import BaseModel, Field
 
-from notebook_lr import Notebook, Cell, CellType, NotebookKernel, SessionManager
+from notebook_lr import Notebook, Cell, CellType, NotebookKernel, SessionManager, Comment
 
 
 # Pydantic models for structured output
@@ -47,16 +48,49 @@ class CellList(BaseModel):
 _notebook: Optional[Notebook] = None
 _kernel: Optional[NotebookKernel] = None
 _session_manager: Optional[SessionManager] = None
+_notebook_path: Optional[str] = None
+_notebook_mtime: float = 0.0
 
 mcp = FastMCP("notebook-lr")
 
 
 def get_notebook() -> Notebook:
-    """Get or create the current notebook."""
-    global _notebook
+    """Get or create the current notebook, loading from NOTEBOOK_LR_PATH if set."""
+    global _notebook, _notebook_path, _notebook_mtime
     if _notebook is None:
-        _notebook = Notebook.new()
+        env_path = os.environ.get("NOTEBOOK_LR_PATH")
+        if env_path and os.path.isfile(env_path):
+            _notebook_path = env_path
+            _notebook = Notebook.load(Path(env_path))
+            _notebook_mtime = os.path.getmtime(env_path)
+        else:
+            _notebook = Notebook.new()
+            if env_path:
+                _notebook_path = env_path
     return _notebook
+
+
+def _maybe_reload() -> None:
+    """Reload notebook from file if it was modified externally."""
+    global _notebook, _notebook_mtime
+    if _notebook_path is None:
+        return
+    try:
+        current_mtime = os.path.getmtime(_notebook_path)
+        if current_mtime != _notebook_mtime:
+            _notebook = Notebook.load(Path(_notebook_path))
+            _notebook_mtime = current_mtime
+    except OSError:
+        pass
+
+
+def _auto_save() -> None:
+    """Save notebook to file after mutations."""
+    global _notebook_mtime
+    if _notebook_path is None or _notebook is None:
+        return
+    _notebook.save(Path(_notebook_path))
+    _notebook_mtime = os.path.getmtime(_notebook_path)
 
 
 def get_kernel() -> NotebookKernel:
@@ -111,6 +145,7 @@ def get_cell_source(index: int) -> str:
     Raises:
         ValueError: If index is out of range
     """
+    _maybe_reload()
     notebook = get_notebook()
     _validate_index(index)
     cell = notebook.get_cell(index)
@@ -134,6 +169,7 @@ def update_cell_source(index: int, source: str) -> bool:
     notebook = get_notebook()
     _validate_index(index)
     notebook.update_cell(index, source=source)
+    _auto_save()
     return True
 
 
@@ -177,6 +213,7 @@ def add_cell(
         new_idx = len(notebook.cells)
 
     notebook.insert_cell(new_idx, cell)
+    _auto_save()
 
     return _cell_to_output(cell, new_idx)
 
@@ -197,6 +234,7 @@ def delete_cell(index: int) -> bool:
     notebook = get_notebook()
     _validate_index(index)
     notebook.remove_cell(index)
+    _auto_save()
     return True
 
 
@@ -227,6 +265,7 @@ def move_cell(index: int, direction: str) -> dict:
             notebook.cells[index - 1],
             notebook.cells[index],
         )
+        _auto_save()
         return {"ok": True, "new_index": index - 1}
     else:  # direction == "down"
         if index == len(notebook.cells) - 1:
@@ -235,6 +274,7 @@ def move_cell(index: int, direction: str) -> dict:
             notebook.cells[index + 1],
             notebook.cells[index],
         )
+        _auto_save()
         return {"ok": True, "new_index": index + 1}
 
 
@@ -251,6 +291,7 @@ def get_cell(index: int) -> CellOutput:
     Raises:
         ValueError: If index is out of range
     """
+    _maybe_reload()
     notebook = get_notebook()
     _validate_index(index)
     cell = notebook.get_cell(index)
@@ -264,6 +305,7 @@ def list_cells() -> CellList:
     Returns:
         CellList containing an array of all cells with their indices
     """
+    _maybe_reload()
     notebook = get_notebook()
     cells = [
         _cell_to_output(cell, i)
@@ -283,6 +325,7 @@ def get_notebook_info() -> NotebookInfo:
     Returns:
         NotebookInfo with metadata including name, cell counts, and version
     """
+    _maybe_reload()
     notebook = get_notebook()
     name = notebook.metadata.get("name", "Untitled")
     cell_count = len(notebook.cells)
@@ -336,10 +379,71 @@ def save_notebook(
         status = "saved"
 
     notebook.metadata["path"] = save_path
+    # Update mtime tracking after explicit save
+    global _notebook_mtime
+    if _notebook_path:
+        _notebook_mtime = os.path.getmtime(save_path)
 
     return {
         "status": status,
         "path": save_path
+    }
+
+
+# =============================================================================
+# Comment & Context Operations
+# =============================================================================
+
+@mcp.tool()
+def get_cell_comments(index: int) -> list[dict]:
+    """Get all comments for the cell at the specified index."""
+    _maybe_reload()
+    notebook = get_notebook()
+    _validate_index(index)
+    cell = notebook.get_cell(index)
+    return [c.model_dump() for c in cell.comments]
+
+
+@mcp.tool()
+def get_notebook_context(index: int) -> dict:
+    """Get rich context about a cell for LLM consumption. Includes neighboring cells and comments."""
+    _maybe_reload()
+    notebook = get_notebook()
+    _validate_index(index)
+    cell = notebook.get_cell(index)
+
+    previous_cell = None
+    if index > 0:
+        prev = notebook.get_cell(index - 1)
+        previous_cell = {
+            "type": prev.type.value,
+            "source_preview": "\n".join(prev.source.splitlines()[:5]),
+        }
+
+    next_cell = None
+    if index < len(notebook.cells) - 1:
+        nxt = notebook.get_cell(index + 1)
+        next_cell = {
+            "type": nxt.type.value,
+            "source_preview": "\n".join(nxt.source.splitlines()[:5]),
+        }
+
+    return {
+        "cell_index": index,
+        "total_cells": len(notebook.cells),
+        "cell_type": cell.type.value,
+        "cell_source": cell.source,
+        "cell_outputs": cell.outputs[:3],
+        "previous_cell": previous_cell,
+        "next_cell": next_cell,
+        "comments": [
+            {
+                "user_comment": c.user_comment,
+                "status": c.status,
+                "selected_text": c.selected_text,
+            }
+            for c in cell.comments
+        ],
     }
 
 
@@ -349,10 +453,12 @@ def save_notebook(
 
 def _reset_notebook() -> None:
     """Reset the global notebook state. Useful for testing."""
-    global _notebook, _kernel, _session_manager
+    global _notebook, _kernel, _session_manager, _notebook_path, _notebook_mtime
     _notebook = None
     _kernel = None
     _session_manager = None
+    _notebook_path = None
+    _notebook_mtime = 0.0
 
 
 if __name__ == "__main__":
