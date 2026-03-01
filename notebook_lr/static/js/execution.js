@@ -70,6 +70,20 @@ NB.execution = {
         ? marked.parse(data['text/markdown'])
         : data['text/markdown'];
       div.innerHTML = NB.execution._sanitizeHtml(rendered);
+      // Render mermaid diagrams in markdown output
+      if (typeof mermaid !== 'undefined') {
+        var mermaidBlocks = div.querySelectorAll('pre code.language-mermaid');
+        mermaidBlocks.forEach(function(codeEl) {
+          var pre = codeEl.parentElement;
+          var mermaidDiv = document.createElement('div');
+          mermaidDiv.className = 'mermaid';
+          mermaidDiv.textContent = codeEl.textContent;
+          pre.parentNode.replaceChild(mermaidDiv, pre);
+        });
+        try {
+          mermaid.run({ nodes: div.querySelectorAll('.mermaid') });
+        } catch(e) { console.warn('Mermaid render failed:', e); }
+      }
     } else if (data['image/png']) {
       var img = document.createElement('img');
       img.src = 'data:image/png;base64,' + data['image/png'];

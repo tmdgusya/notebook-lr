@@ -26,6 +26,22 @@ NB.cells = (function () {
     }
   }
 
+  function renderMermaid(element) {
+    if (typeof mermaid === 'undefined') return;
+    var mermaidBlocks = element.querySelectorAll('pre code.language-mermaid');
+    if (mermaidBlocks.length === 0) return;
+    mermaidBlocks.forEach(function(codeEl) {
+      var pre = codeEl.parentElement;
+      var mermaidDiv = document.createElement('div');
+      mermaidDiv.className = 'mermaid';
+      mermaidDiv.textContent = codeEl.textContent;
+      pre.parentNode.replaceChild(mermaidDiv, pre);
+    });
+    try {
+      mermaid.run({ nodes: element.querySelectorAll('.mermaid') });
+    } catch(e) { console.warn('Mermaid render failed:', e); }
+  }
+
   function renderDivider(afterIndex) {
     const div = document.createElement('div');
     div.className = 'add-cell-divider';
@@ -183,6 +199,7 @@ NB.cells = (function () {
             ? marked.parse(src)
             : src;
           renderKaTeX(previewEl);
+          renderMermaid(previewEl);
           previewEl.style.display = '';
           editorEl.style.display = 'none';
           previewBtn.textContent = 'Edit';
@@ -224,6 +241,7 @@ NB.cells = (function () {
             ? marked.parse(src)
             : src;
           renderKaTeX(previewEl);
+          renderMermaid(previewEl);
           previewEl.style.display = '';
           editorEl.style.display = 'none';
           const previewBtn = cellDiv.querySelector('.preview-toggle-btn');

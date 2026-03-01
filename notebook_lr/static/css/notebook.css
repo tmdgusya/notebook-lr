@@ -2092,3 +2092,21 @@ button:focus-visible {
 .cell-output.output-expanded::after {
   display: none;
 }
+
+/* Mermaid diagram styles */
+.cell-md-preview .mermaid,
+.cell-output .mermaid {
+  display: flex;
+  justify-content: center;
+  padding: 16px 8px;
+  background: #fafafa;
+  border-radius: 6px;
+  margin: 12px 0;
+  overflow-x: auto;
+}
+
+.cell-md-preview .mermaid svg,
+.cell-output .mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
