@@ -208,6 +208,14 @@ NB.toolbar = {
           return;
         }
       }
+      // Ctrl+Shift+D: Toggle debug panel
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'D') {
+        e.preventDefault();
+        if (NB.debugPanel) {
+          NB.debugPanel.toggle();
+        }
+        return;
+      }
       
       // Shortcuts that don't work while editing
       if (cmFocused) return;
