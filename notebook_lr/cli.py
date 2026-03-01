@@ -818,97 +818,108 @@ class NotebookEditor:
                     f"{len(checkpoint_info['restored_vars'])} variables[/green]"
                 )
 
-        while self.running:
-            self.display_cells()
-            self.display_command_bar()
+        # Start file watcher
+        self._start_file_watcher()
 
-            try:
-                key = console.input("\n[bold cyan]> [/bold cyan]").strip()
-            except (KeyboardInterrupt, EOFError):
-                key = "q"
+        try:
+            while self.running:
+                # Check for external changes before display
+                self._handle_external_changes()
 
-            if key == "q":
-                if self.modified:
-                    if Confirm.ask("Save before quitting?"):
-                        self.save_notebook()
-                self.running = False
+                self.display_cells()
+                self.display_command_bar()
 
-            elif key == "h":
-                self.show_help()
+                try:
+                    key = console.input("\n[bold cyan]> [/bold cyan]").strip()
+                except (KeyboardInterrupt, EOFError):
+                    key = "q"
 
-            elif key == "" or key == "enter":
-                self.edit_current_cell()
+                if key == "q":
+                    if self.modified:
+                        if Confirm.ask("Save before quitting?"):
+                            self.save_notebook()
+                    self.running = False
 
-            elif key == "e":
-                self.execute_current_cell()
+                elif key == "h":
+                    self.show_help()
 
-            elif key == "E":
-                self.execute_all_cells()
+                elif key == "" or key == "enter":
+                    self.edit_current_cell()
 
-            elif key == "a":
-                self.add_cell_after()
+                elif key == "e":
+                    self.execute_current_cell()
 
-            elif key == "b":
-                self.add_cell_before()
+                elif key == "E":
+                    self.execute_all_cells()
 
-            elif key == "d":
-                self.delete_current_cell()
+                elif key == "a":
+                    self.add_cell_after()
 
-            elif key == "u":
-                self.undo_delete()
+                elif key == "b":
+                    self.add_cell_before()
 
-            elif key == "m":
-                self.toggle_cell_type()
+                elif key == "d":
+                    self.delete_current_cell()
 
-            elif key == "c":
-                self.duplicate_cell()
+                elif key == "u":
+                    self.undo_delete()
 
-            elif key == "s":
-                self.save_notebook()
+                elif key == "m":
+                    self.toggle_cell_type()
 
-            elif key == "S":
-                self.save_notebook(include_session=True)
+                elif key == "c":
+                    self.duplicate_cell()
 
-            elif key == "l":
-                self.load_session()
+                elif key == "s":
+                    self.save_notebook()
 
-            elif key == "?":
-                self.show_variables()
+                elif key == "S":
+                    self.save_notebook(include_session=True)
 
-            elif key == "/":
-                self.search_cells()
+                elif key == "l":
+                    self.load_session()
 
-            elif key == "x":
-                self.clear_outputs()
+                elif key == "?":
+                    self.show_variables()
 
-            elif key == "X":
-                self.clear_kernel()
+                elif key == "/":
+                    self.search_cells()
 
-            elif key in ("j", "down"):
-                if self.notebook.cells and self.current_cell_index < len(self.notebook.cells) - 1:
-                    self.current_cell_index += 1
+                elif key == "x":
+                    self.clear_outputs()
 
-            elif key in ("k", "up"):
-                if self.current_cell_index > 0:
-                    self.current_cell_index -= 1
+                elif key == "X":
+                    self.clear_kernel()
 
-            elif key == "g":
-                self.current_cell_index = 0
+                elif key in ("j", "down"):
+                    if self.notebook.cells and self.current_cell_index < len(self.notebook.cells) - 1:
+                        self.current_cell_index += 1
 
-            elif key == "G":
-                if self.notebook.cells:
-                    self.current_cell_index = len(self.notebook.cells) - 1
+                elif key in ("k", "up"):
+                    if self.current_cell_index > 0:
+                        self.current_cell_index -= 1
 
-            elif key == "J":
-                self.move_cell_down()
+                elif key == "g":
+                    self.current_cell_index = 0
 
-            elif key == "K":
-                self.move_cell_up()
+                elif key == "G":
+                    if self.notebook.cells:
+                        self.current_cell_index = len(self.notebook.cells) - 1
 
-            else:
-                self._set_message(f"[dim]Unknown command: '{key}' (press 'h' for help)[/dim]")
+                elif key == "J":
+                    self.move_cell_down()
 
-        console.print("\n[green]Goodbye![/green]")
+                elif key == "K":
+                    self.move_cell_up()
+
+                else:
+                    self._set_message(f"[dim]Unknown command: '{key}' (press 'h' for help)[/dim]")
+
+            console.print("\n[green]Goodbye![/green]")
+
+        finally:
+            # Stop file watcher on exit
+            self._stop_file_watcher()
 
 
 @click.group()
