@@ -48,32 +48,45 @@
     <header id="notebook-header">
       <div class="header-left">
         <h1>notebook-lr</h1>
-        <span id="save-indicator" class="save-indicator save-saved" title="All changes saved">&#10003; Saved</span>
+        <span id="save-indicator" class="save-indicator save-saved" title="All changes saved">
+          <span class="save-icon">&#10003;</span> <span class="save-text">Saved</span>
+        </span>
       </div>
       <div id="notebook-info"></div>
     </header>
 
     <div id="toolbar">
-      <button id="run-all-btn" class="toolbar-btn toolbar-btn-primary" title="Run All Cells">
-        <span class="icon">&#9654;&#9654;</span> Run All
+      <button id="run-all-btn" class="toolbar-btn toolbar-btn-primary" title="Run All Cells (Ctrl+Shift+Enter)">
+        <span class="icon">&#9654;&#9654;</span> <span class="btn-label">Run All</span>
       </button>
       <div class="toolbar-separator"></div>
-      <button id="save-btn" class="toolbar-btn" title="Save">
-        <span class="icon">&#128190;</span> Save
+      <button id="add-code-btn" class="toolbar-btn" title="Add Code Cell (A)">
+        <span class="icon">&#9998;</span> <span class="btn-label">Code</span>
       </button>
-      <button id="save-session-btn" class="toolbar-btn" title="Save with Session">
-        <span class="icon">&#128190;</span> Save + Session
+      <button id="add-md-btn" class="toolbar-btn" title="Add Markdown Cell (M)">
+        <span class="icon">&#128221;</span> <span class="btn-label">Markdown</span>
+      </button>
+      <div class="toolbar-separator"></div>
+      <button id="save-btn" class="toolbar-btn" title="Save (Ctrl+S)">
+        <span class="icon">&#128190;</span> <span class="btn-label">Save</span>
+      </button>
+      <button id="save-session-btn" class="toolbar-btn" title="Save with Session (Ctrl+Shift+S)">
+        <span class="icon">&#128190;</span> <span class="btn-label">Save + Session</span>
       </button>
       <button id="load-btn" class="toolbar-btn" title="Load Notebook">
-        <span class="icon">&#128194;</span> Load
+        <span class="icon">&#128194;</span> <span class="btn-label">Load</span>
       </button>
       <input type="file" id="load-file-input" accept=".nblr" hidden>
       <div class="toolbar-separator"></div>
       <button id="vars-btn" class="toolbar-btn" title="Show Variables">
-        <span class="icon">&#123;</span> Variables
+        <span class="icon">&#123;</span> <span class="btn-label">Variables</span>
       </button>
       <button id="clear-vars-btn" class="toolbar-btn toolbar-btn-danger" title="Clear All Variables">
-        <span class="icon">&#128465;</span> Clear Vars
+        <span class="icon">&#128465;</span> <span class="btn-label">Clear</span>
+      </button>
+      <div class="toolbar-spacer"></div>
+      <button id="help-btn" class="toolbar-btn" title="Keyboard Shortcuts (?)" style="margin-left: auto;">
+        <span class="icon">&#63;</span> <span class="btn-label">Help</span>
       </button>
     </div>
 
@@ -87,6 +100,44 @@
         <button id="close-vars-btn" class="close-btn">&times;</button>
       </div>
       <div id="variables-content"></div>
+    </div>
+
+    <!-- Keyboard Shortcuts Modal -->
+    <div id="shortcuts-modal" class="modal hidden">
+      <div class="modal-overlay"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Keyboard Shortcuts</h3>
+          <button id="close-shortcuts-btn" class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="shortcuts-grid">
+            <div class="shortcut-section">
+              <h4>Navigation</h4>
+              <div class="shortcut-item"><kbd>↑</kbd><kbd>↓</kbd> Navigate cells</div>
+              <div class="shortcut-item"><kbd>Enter</kbd> Edit cell</div>
+              <div class="shortcut-item"><kbd>Esc</kbd> Exit edit mode</div>
+            </div>
+            <div class="shortcut-section">
+              <h4>Execution</h4>
+              <div class="shortcut-item"><kbd>Ctrl</kbd>+<kbd>Enter</kbd> Run cell</div>
+              <div class="shortcut-item"><kbd>Shift</kbd>+<kbd>Enter</kbd> Run and advance</div>
+              <div class="shortcut-item"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd> Run all</div>
+            </div>
+            <div class="shortcut-section">
+              <h4>Cell Management</h4>
+              <div class="shortcut-item"><kbd>A</kbd> Add code cell</div>
+              <div class="shortcut-item"><kbd>M</kbd> Add markdown cell</div>
+              <div class="shortcut-item"><kbd>D</kbd> Delete selected cell</div>
+            </div>
+            <div class="shortcut-section">
+              <h4>File Operations</h4>
+              <div class="shortcut-item"><kbd>Ctrl</kbd>+<kbd>S</kbd> Save</div>
+              <div class="shortcut-item"><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> Save with session</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 

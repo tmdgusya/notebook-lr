@@ -1,15 +1,34 @@
 window.NB = window.NB || {};
 
 NB.execution = {
+  _executionTimes: {}, // index -> { startTime, endTime }
+
   async executeCell(index) {
     const source = NB.cells.getEditorContent(index);
+
+    // Track execution start time
+    NB.execution._executionTimes[index] = { startTime: Date.now() };
 
     // Show running state
     NB.execution.showRunning(index);
 
     try {
       const result = await NB.api.executeCell(index, source);
+      
+      // Calculate execution time
+      const execInfo = NB.execution._executionTimes[index];
+      if (execInfo) {
+        execInfo.endTime = Date.now();
+        execInfo.duration = execInfo.endTime - execInfo.startTime;
+      }
+      
       NB.cells.updateCellOutput(index, result.outputs, result.execution_count);
+      
+      // Add execution time metadata to output if successful
+      if (result.success && execInfo && execInfo.duration > 100) {
+        NB.execution._addExecutionTimeToCell(index, execInfo.duration);
+      }
+      
       NB.toolbar.updateInfo();
     } catch (err) {
       NB.cells.updateCellOutput(index, [{
@@ -17,20 +36,60 @@ NB.execution = {
         ename: 'NetworkError',
         evalue: err.message
       }], null);
+      NB.toolbar.showError('Cell execution failed: ' + err.message);
     } finally {
       NB.execution.hideRunning(index);
+      delete NB.execution._executionTimes[index];
     }
   },
 
+  _addExecutionTimeToCell(index, durationMs) {
+    const cell = document.querySelector('.cell[data-index="' + index + '"]');
+    if (!cell) return;
+    
+    // Format duration
+    let durationText;
+    if (durationMs < 1000) {
+      durationText = durationMs + 'ms';
+    } else {
+      durationText = (durationMs / 1000).toFixed(2) + 's';
+    }
+    
+    // Find or create execution time element
+    let execTimeEl = cell.querySelector('.cell-exec-time');
+    if (!execTimeEl) {
+      execTimeEl = document.createElement('span');
+      execTimeEl.className = 'cell-exec-time';
+      const gutter = cell.querySelector('.cell-gutter');
+      if (gutter) {
+        gutter.appendChild(execTimeEl);
+      }
+    }
+    execTimeEl.textContent = durationText;
+    execTimeEl.title = 'Execution time: ' + durationText;
+  },
+
   async executeAll() {
+    const startTime = Date.now();
     try {
       const result = await NB.api.executeAll();
+      const duration = Date.now() - startTime;
+      
       // Refresh all cells to show updated outputs
       const nb = await NB.api.getNotebook();
       NB.cells.renderAll(nb.cells);
       NB.toolbar.updateInfo();
+      
+      // Show success message with timing
+      let durationText;
+      if (duration < 1000) {
+        durationText = duration + 'ms';
+      } else {
+        durationText = (duration / 1000).toFixed(1) + 's';
+      }
+      NB.toolbar.showSuccess('All cells executed in ' + durationText);
     } catch (err) {
-      NB.toolbar.showNotification('Execute all failed: ' + err.message);
+      NB.toolbar.showError('Execute all failed: ' + err.message);
     }
   },
 

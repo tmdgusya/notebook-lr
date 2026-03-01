@@ -31,13 +31,50 @@ NB.toolbar = {
 
     document.getElementById('clear-vars-btn').addEventListener('click', async function() {
       await NB.api.clearVariables();
-      NB.toolbar.showNotification('Variables cleared');
+      NB.toolbar.showSuccess('Variables cleared');
       document.getElementById('variables-panel').classList.add('hidden');
     });
 
     document.getElementById('close-vars-btn').addEventListener('click', function() {
       document.getElementById('variables-panel').classList.add('hidden');
     });
+
+    // Add cell buttons
+    var addCodeBtn = document.getElementById('add-code-btn');
+    var addMdBtn = document.getElementById('add-md-btn');
+    var helpBtn = document.getElementById('help-btn');
+    
+    if (addCodeBtn) {
+      addCodeBtn.addEventListener('click', function() {
+        var selectedIdx = NB.cells.getSelectedIndex();
+        NB.cells.addCell(selectedIdx >= 0 ? selectedIdx : -1, 'code');
+      });
+    }
+    
+    if (addMdBtn) {
+      addMdBtn.addEventListener('click', function() {
+        var selectedIdx = NB.cells.getSelectedIndex();
+        NB.cells.addCell(selectedIdx >= 0 ? selectedIdx : -1, 'markdown');
+      });
+    }
+    
+    if (helpBtn) {
+      helpBtn.addEventListener('click', function() {
+        NB.toolbar.showShortcutsModal();
+      });
+    }
+    
+    // Close shortcuts modal
+    var closeShortcutsBtn = document.getElementById('close-shortcuts-btn');
+    var shortcutsModal = document.getElementById('shortcuts-modal');
+    if (closeShortcutsBtn && shortcutsModal) {
+      closeShortcutsBtn.addEventListener('click', function() {
+        shortcutsModal.classList.add('hidden');
+      });
+      shortcutsModal.querySelector('.modal-overlay').addEventListener('click', function() {
+        shortcutsModal.classList.add('hidden');
+      });
+    }
 
     NB.toolbar.initKeyboardShortcuts();
 
@@ -88,35 +125,145 @@ NB.toolbar = {
     }
   },
 
-  showNotification(message, duration) {
+  showNotification(message, type, duration) {
     duration = duration || 3000;
+    type = type || 'info'; // 'info', 'success', 'error', 'warning'
+    
     var notif = document.getElementById('notification');
     if (!notif) {
       notif = document.createElement('div');
       notif.id = 'notification';
       document.body.appendChild(notif);
     }
-    notif.textContent = message;
-    notif.classList.add('show');
-    setTimeout(function() { notif.classList.remove('show'); }, duration);
+    
+    // Clear previous classes
+    notif.className = '';
+    notif.classList.add(type);
+    
+    // Add icon based on type
+    var icon = '';
+    if (type === 'success') icon = '&#10003; ';
+    else if (type === 'error') icon = '&#10007; ';
+    else if (type === 'warning') icon = '&#9888; ';
+    else if (type === 'info') icon = '&#9432; ';
+    
+    notif.innerHTML = icon + message;
+    notif.classList.remove('hidden');
+    
+    // Clear any existing timeout
+    if (notif._timeout) {
+      clearTimeout(notif._timeout);
+    }
+    
+    notif._timeout = setTimeout(function() { 
+      notif.classList.add('hidden'); 
+    }, duration);
+  },
+  
+  showError(message, duration) {
+    this.showNotification(message, 'error', duration || 5000);
+  },
+  
+  showSuccess(message, duration) {
+    this.showNotification(message, 'success', duration || 3000);
+  },
+
+  showShortcutsModal() {
+    var modal = document.getElementById('shortcuts-modal');
+    if (modal) {
+      modal.classList.remove('hidden');
+    }
   },
 
   initKeyboardShortcuts() {
     document.addEventListener('keydown', function(e) {
-      // Don't capture when typing in CodeMirror
-      if (e.target.closest('.CodeMirror')) return;
-
+      var cmFocused = e.target.closest('.CodeMirror');
+      
+      // Global shortcuts (work everywhere)
       // Ctrl+S / Cmd+S: Save
       if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key === 's') {
         e.preventDefault();
         NB.fileops._updateIndicator('saving');
         NB.fileops.save(false);
+        return;
       }
       // Ctrl+Shift+S: Save with session
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'S') {
         e.preventDefault();
         NB.fileops._updateIndicator('saving');
         NB.fileops.save(true);
+        return;
+      }
+      // ?: Show shortcuts modal
+      if (!cmFocused && e.key === '?' && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        NB.toolbar.showShortcutsModal();
+        return;
+      }
+      // Escape: Close modal
+      if (e.key === 'Escape') {
+        var modal = document.getElementById('shortcuts-modal');
+        if (modal && !modal.classList.contains('hidden')) {
+          modal.classList.add('hidden');
+          return;
+        }
+      }
+      
+      // Shortcuts that don't work while editing
+      if (cmFocused) return;
+      
+      var selectedIdx = NB.cells.getSelectedIndex();
+      
+      // A: Add code cell after selected
+      if (e.key === 'a' || e.key === 'A') {
+        e.preventDefault();
+        NB.cells.addCell(selectedIdx >= 0 ? selectedIdx : -1, 'code');
+        return;
+      }
+      // M: Add markdown cell after selected  
+      if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        NB.cells.addCell(selectedIdx >= 0 ? selectedIdx : -1, 'markdown');
+        return;
+      }
+      // D: Delete selected cell
+      if ((e.key === 'd' || e.key === 'D') && selectedIdx >= 0) {
+        e.preventDefault();
+        if (confirm('Delete this cell?')) {
+          NB.cells.deleteCell(selectedIdx);
+        }
+        return;
+      }
+      // Arrow navigation
+      if (e.key === 'ArrowDown' || e.key === 'j' || e.key === 'J') {
+        e.preventDefault();
+        var nextIdx = selectedIdx + 1;
+        var totalCells = document.querySelectorAll('#cells-container .cell').length;
+        if (nextIdx < totalCells) {
+          NB.cells.selectCell(nextIdx);
+        }
+        return;
+      }
+      if (e.key === 'ArrowUp' || e.key === 'k' || e.key === 'K') {
+        e.preventDefault();
+        var prevIdx = selectedIdx - 1;
+        if (prevIdx >= 0) {
+          NB.cells.selectCell(prevIdx);
+        }
+        return;
+      }
+      // Enter: Edit selected cell
+      if (e.key === 'Enter' && selectedIdx >= 0) {
+        e.preventDefault();
+        var cell = document.querySelector('#cells-container .cell[data-index="' + selectedIdx + '"]');
+        if (cell) {
+          cell.classList.add('editing');
+          var cm = cell.querySelector('.CodeMirror');
+          if (cm && cm.CodeMirror) {
+            cm.CodeMirror.focus();
+          }
+        }
+        return;
       }
     });
   }

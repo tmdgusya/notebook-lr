@@ -81,8 +81,15 @@ class NotebookEditor:
         if not self.notebook.cells:
             console.print()
             console.print(Panel(
-                "[dim]No cells yet. Press [bold]a[/bold] to add a cell.[/dim]",
-                border_style="dim",
+                "[bold]Welcome to notebook-lr![/bold]\n\n"
+                "This notebook is empty. Get started:\n"
+                "  • Press [bold cyan]a[/bold cyan] to add a code cell\n"
+                "  • Press [bold cyan]b[/bold cyan] to add a cell before\n"
+                "  • Press [bold cyan]m[/bold cyan] to toggle code/markdown\n"
+                "  • Press [bold cyan]h[/bold cyan] for all shortcuts\n\n"
+                "[dim]Tip: Variables persist across cell executions.[/dim]",
+                border_style="cyan",
+                title="[bold blue]Getting Started[/bold blue]",
             ))
             return
 

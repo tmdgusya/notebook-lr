@@ -7,10 +7,11 @@ NB.fileops = {
       var result = await NB.api.save(includeSession);
       NB.fileops._isDirty = false;
       NB.fileops._updateIndicator('saved');
-      NB.toolbar.showNotification(result.status || 'Saved');
+      NB.toolbar.showSuccess(result.status || 'Saved successfully');
     } catch (err) {
       NB.fileops._updateIndicator('modified');
-      NB.toolbar.showNotification('Save failed: ' + err.message);
+      NB.toolbar.showError('Save failed: ' + (err.message || 'Unknown error'));
+      console.error('Save error:', err);
     }
   },
 
@@ -19,9 +20,10 @@ NB.fileops = {
       var data = await NB.api.load(file);
       NB.cells.renderAll(data.cells);
       NB.toolbar.updateInfo();
-      NB.toolbar.showNotification('Loaded ' + file.name);
+      NB.toolbar.showSuccess('Loaded ' + file.name);
     } catch (err) {
-      NB.toolbar.showNotification('Load failed: ' + err.message);
+      NB.toolbar.showError('Load failed: ' + (err.message || 'Unknown error'));
+      console.error('Load error:', err);
     }
   },
 
@@ -38,9 +40,25 @@ NB.fileops = {
     const el = document.getElementById('save-indicator');
     if (!el) return;
     el.className = 'save-indicator save-' + state;
-    if (state === 'saved') { el.textContent = '\u2713 Saved'; el.title = 'All changes saved'; }
-    else if (state === 'modified') { el.textContent = '\u25CF Modified'; el.title = 'Unsaved changes'; }
-    else if (state === 'saving') { el.textContent = '\u23F3 Saving...'; el.title = 'Saving...'; }
+    
+    const iconEl = el.querySelector('.save-icon');
+    const textEl = el.querySelector('.save-text');
+    
+    if (state === 'saved') { 
+      if (iconEl) iconEl.innerHTML = '&#10003;'; 
+      if (textEl) textEl.textContent = 'Saved'; 
+      el.title = 'All changes saved'; 
+    }
+    else if (state === 'modified') { 
+      if (iconEl) iconEl.innerHTML = '&#9679;'; 
+      if (textEl) textEl.textContent = 'Modified'; 
+      el.title = 'Unsaved changes - will auto-save in 30s'; 
+    }
+    else if (state === 'saving') { 
+      if (iconEl) iconEl.innerHTML = '&#9203;'; 
+      if (textEl) textEl.textContent = 'Saving...'; 
+      el.title = 'Saving...'; 
+    }
   },
 
   _startAutosave() {

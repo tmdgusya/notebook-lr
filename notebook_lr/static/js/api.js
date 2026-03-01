@@ -1,20 +1,49 @@
 window.NB = window.NB || {};
 
 NB.api = (function() {
-  async function _get(url) {
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(await res.text());
+  async function _handleResponse(res, operation) {
+    if (!res.ok) {
+      let errorMsg;
+      try {
+        const errorData = await res.json();
+        errorMsg = errorData.error || errorData.message || res.statusText;
+      } catch (e) {
+        errorMsg = await res.text() || res.statusText || 'Unknown error';
+      }
+      console.error('API Error (' + operation + '):', errorMsg);
+      throw new Error(errorMsg);
+    }
     return res.json();
   }
 
+  async function _get(url) {
+    try {
+      const res = await fetch(url);
+      return await _handleResponse(res, 'GET ' + url);
+    } catch (err) {
+      // Network or other errors
+      if (err.name === 'TypeError' || err.message.includes('fetch')) {
+        throw new Error('Network error - please check your connection');
+      }
+      throw err;
+    }
+  }
+
   async function _post(url, data) {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
-    if (!res.ok) throw new Error(await res.text());
-    return res.json();
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      return await _handleResponse(res, 'POST ' + url);
+    } catch (err) {
+      // Network or other errors
+      if (err.name === 'TypeError' || err.message.includes('fetch')) {
+        throw new Error('Network error - please check your connection');
+      }
+      throw err;
+    }
   }
 
   return {

@@ -289,12 +289,51 @@ NB.cells = (function () {
     return cellDiv;
   }
 
+  function renderEmptyState() {
+    const emptyState = document.createElement('div');
+    emptyState.className = 'empty-state';
+    emptyState.innerHTML = `
+      <div class="empty-state-icon">&#128211;</div>
+      <h2>Welcome to notebook-lr</h2>
+      <p>This notebook is empty. Start by adding your first cell.</p>
+      <div class="empty-state-actions">
+        <button class="empty-state-btn empty-state-btn-primary" data-type="code">
+          <span class="icon">&#9998;</span> Add Code Cell
+        </button>
+        <button class="empty-state-btn" data-type="markdown">
+          <span class="icon">&#128221;</span> Add Markdown
+        </button>
+      </div>
+      <div class="empty-state-tips">
+        <p><strong>Tip:</strong> Press <kbd>Shift</kbd>+<kbd>Enter</kbd> to run a cell</p>
+        <p><strong>Tip:</strong> Click the ? button or press <kbd>h</kbd> for keyboard shortcuts</p>
+      </div>
+    `;
+    
+    // Add event listeners
+    emptyState.querySelector('[data-type="code"]').addEventListener('click', function() {
+      addCell(-1, 'code');
+    });
+    emptyState.querySelector('[data-type="markdown"]').addEventListener('click', function() {
+      addCell(-1, 'markdown');
+    });
+    
+    return emptyState;
+  }
+
   function renderAll(cells) {
     const container = document.getElementById('cells-container');
     if (!container) return;
 
     clearEditors();
     container.innerHTML = '';
+
+    // Show empty state if no cells
+    if (cells.length === 0) {
+      container.appendChild(renderEmptyState());
+      selectedIndex = -1;
+      return;
+    }
 
     // Top divider (after=-1)
     container.appendChild(renderDivider(-1));
@@ -353,8 +392,14 @@ NB.cells = (function () {
       if (newIndex >= 0 && newIndex < nb.cells.length) {
         selectCell(newIndex);
       }
+      if (NB.toolbar && NB.toolbar.showSuccess) {
+        NB.toolbar.showSuccess('Cell added');
+      }
     } catch (err) {
       console.error('Failed to add cell:', err);
+      if (NB.toolbar && NB.toolbar.showError) {
+        NB.toolbar.showError('Failed to add cell: ' + (err.message || 'Unknown error'));
+      }
     }
   }
 
@@ -368,8 +413,14 @@ NB.cells = (function () {
         const nearestIndex = Math.min(index, nb.cells.length - 1);
         selectCell(nearestIndex);
       }
+      if (NB.toolbar && NB.toolbar.showSuccess) {
+        NB.toolbar.showSuccess('Cell deleted');
+      }
     } catch (err) {
       console.error('Failed to delete cell:', err);
+      if (NB.toolbar && NB.toolbar.showError) {
+        NB.toolbar.showError('Failed to delete cell: ' + (err.message || 'Unknown error'));
+      }
     }
   }
 
@@ -383,6 +434,9 @@ NB.cells = (function () {
       selectCell(newIndex);
     } catch (err) {
       console.error('Failed to move cell:', err);
+      if (NB.toolbar && NB.toolbar.showError) {
+        NB.toolbar.showError('Failed to move cell: ' + (err.message || 'Unknown error'));
+      }
     }
   }
 
