@@ -406,19 +406,57 @@ NB.debugPanel = (function() {
       detail.appendChild(createDetailSection('Duration', formatDuration(event.duration)));
     }
     
-    // Data
-    if (event.data && Object.keys(event.data).length > 0) {
+    // User Question (for comment/AI operations)
+    if (event.data.userComment) {
+      detail.appendChild(createDetailSection('User Question', event.data.userComment));
+    }
+    
+    // AI Response (prominently displayed)
+    if (event.data.aiResponse) {
+      const responseSection = document.createElement('div');
+      responseSection.className = 'debug-detail-section';
+      
+      const responseLabel = document.createElement('div');
+      responseLabel.className = 'debug-detail-label';
+      responseLabel.textContent = 'AI Response';
+      responseSection.appendChild(responseLabel);
+      
+      const responseValue = document.createElement('div');
+      responseValue.className = 'debug-detail-value ai-response';
+      responseValue.style.whiteSpace = 'pre-wrap';
+      responseValue.style.fontFamily = '"Roboto Mono", "Consolas", monospace';
+      responseValue.style.maxHeight = '300px';
+      responseValue.style.overflow = 'auto';
+      responseValue.textContent = event.data.aiResponse;
+      responseSection.appendChild(responseValue);
+      
+      detail.appendChild(responseSection);
+    }
+    
+    // Error (if any)
+    if (event.data.error) {
+      detail.appendChild(createDetailSection('Error', event.data.error, true));
+    }
+    
+    // Other Data (excluding what we already displayed)
+    const otherData = {};
+    for (var key in event.data) {
+      if (key !== 'userComment' && key !== 'aiResponse' && key !== 'error') {
+        otherData[key] = event.data[key];
+      }
+    }
+    if (Object.keys(otherData).length > 0) {
       const dataSection = document.createElement('div');
       dataSection.className = 'debug-detail-section';
       
       const label = document.createElement('div');
       label.className = 'debug-detail-label';
-      label.textContent = 'Data';
+      label.textContent = 'Other Data';
       dataSection.appendChild(label);
       
       const value = document.createElement('div');
-      value.className = 'debug-detail-value' + (event.data.error ? ' error' : '');
-      value.textContent = JSON.stringify(event.data, null, 2);
+      value.className = 'debug-detail-value';
+      value.textContent = JSON.stringify(otherData, null, 2);
       dataSection.appendChild(value);
       
       detail.appendChild(dataSection);
@@ -430,7 +468,7 @@ NB.debugPanel = (function() {
   /**
    * Create a detail section
    */
-  function createDetailSection(label, value) {
+  function createDetailSection(label, value, isError) {
     const section = document.createElement('div');
     section.className = 'debug-detail-section';
     
@@ -439,7 +477,8 @@ NB.debugPanel = (function() {
     labelEl.textContent = label;
     
     const valueEl = document.createElement('div');
-    valueEl.className = 'debug-detail-value';
+    valueEl.className = 'debug-detail-value' + (isError ? ' error' : '');
+    valueEl.style.whiteSpace = 'pre-wrap';
     valueEl.textContent = value;
     
     section.appendChild(labelEl);
@@ -469,6 +508,16 @@ NB.debugPanel = (function() {
    * Get summary for event
    */
   function getSummary(event) {
+    // Show AI response preview for AI calls
+    if (event.data.aiResponse) {
+      var preview = event.data.aiResponse.substring(0, 60).replace(/\n/g, ' ');
+      return preview + (event.data.aiResponse.length > 60 ? '...' : '');
+    }
+    // Show user comment preview for comment_add
+    if (event.data.userComment && event.type === 'comment_add') {
+      var preview = event.data.userComment.substring(0, 60).replace(/\n/g, ' ');
+      return 'Q: ' + preview + (event.data.userComment.length > 60 ? '...' : '');
+    }
     if (event.data.error) {
       return event.data.error.substring(0, 80);
     }

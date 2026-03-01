@@ -262,16 +262,30 @@ NB.comments = (function () {
         user_comment: userComment,
         provider: selectedProvider
       }).then(function (res) {
-        // Complete AI call event
+        // Complete AI call event with full response
         if (NB.agentLogger && aiEventId) {
-          NB.agentLogger.logComplete(aiEventId, res.comment && res.comment.status === 'error' ? 'error' : 'success', {
-            commentId: res.comment ? res.comment.id : null
-          });
+          var isError = res.comment && res.comment.status === 'error';
+          var responseData = {
+            commentId: res.comment ? res.comment.id : null,
+            provider: selectedProvider
+          };
+          // Include AI response (truncated for large responses)
+          if (res.comment && res.comment.ai_response) {
+            var aiResponse = res.comment.ai_response;
+            responseData.aiResponse = aiResponse.length > 500 
+              ? aiResponse.substring(0, 500) + '... (truncated)' 
+              : aiResponse;
+          }
+          // Include user comment for context
+          responseData.userComment = userComment;
+          NB.agentLogger.logComplete(aiEventId, isError ? 'error' : 'success', responseData);
         }
 
         // Complete parent event
         if (NB.agentLogger && parentEventId) {
-          NB.agentLogger.logComplete(parentEventId, res.comment && res.comment.status === 'error' ? 'error' : 'success');
+          NB.agentLogger.logComplete(parentEventId, res.comment && res.comment.status === 'error' ? 'error' : 'success', {
+            commentId: res.comment ? res.comment.id : null
+          });
         }
 
         if (res.ok && res.comment) {
