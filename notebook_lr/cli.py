@@ -44,6 +44,97 @@ class NotebookEditor:
         """Set a status message to display on next render."""
         self._status_message = message
 
+    def _start_file_watcher(self) -> None:
+        """Start watching the notebook file for external changes."""
+        path = self.notebook.metadata.get("path")
+        if path is None:
+            return
+        
+        path_obj = Path(path)
+        if not path_obj.exists():
+            return
+        
+        self.file_watcher = FileWatcher(path_obj, poll_interval=1.0)
+        self.file_watcher.start()
+
+    def _stop_file_watcher(self) -> None:
+        """Stop the file watcher."""
+        if self.file_watcher is not None:
+            self.file_watcher.stop()
+            self.file_watcher = None
+
+    def _check_external_changes(self) -> bool:
+        """Check if file has been modified externally.
+        
+        Returns:
+            True if external changes detected
+        """
+        if self.file_watcher is None:
+            return False
+        return self.file_watcher.has_changes()
+
+    def _resolve_conflict(self) -> str:
+        """Show conflict dialog and return user choice.
+        
+        Returns:
+            'reload' to load external changes
+            'keep' to keep local changes
+            'cancel' to do nothing
+        """
+        console.print()
+        console.print(Panel(
+            "[bold yellow]External changes detected![/bold yellow]\n\n"
+            "The notebook file has been modified by another process (e.g., MCP server).\n"
+            "You also have unsaved changes in this editor.\n\n"
+            "[cyan]r[/cyan] - Reload file (discard your changes)\n"
+            "[cyan]k[/cyan] - Keep your changes (overwrite file on save)\n"
+            "[cyan]c[/cyan] - Cancel (do nothing for now)",
+            title="[bold red]Conflict Detected[/bold red]",
+            border_style="red",
+        ))
+        
+        while True:
+            choice = console.input("[bold cyan]Choice [r/k/c]: [/bold cyan]").strip().lower()
+            if choice in ('r', 'reload'):
+                return 'reload'
+            elif choice in ('k', 'keep'):
+                return 'keep'
+            elif choice in ('c', 'cancel'):
+                return 'cancel'
+            console.print("[dim]Invalid choice. Use r, k, or c.[/dim]")
+
+    def _reload_from_disk(self) -> None:
+        """Reload notebook from disk and update display."""
+        path = self.notebook.metadata.get("path")
+        if path is None:
+            return
+        
+        try:
+            from notebook_lr import Notebook
+            new_notebook = Notebook.load(Path(path))
+            
+            # Preserve path metadata
+            new_notebook.metadata["path"] = path
+            
+            # Update editor state
+            self.notebook = new_notebook
+            
+            # Adjust current cell index if needed
+            if self.current_cell_index >= len(self.notebook.cells):
+                self.current_cell_index = max(0, len(self.notebook.cells) - 1)
+            
+            # Mark as not modified (we just loaded fresh content)
+            self.modified = False
+            
+            # Acknowledge the change in watcher
+            if self.file_watcher:
+                self.file_watcher.acknowledge_changes()
+            
+            self._set_message("[green]Notebook reloaded from disk[/green]")
+            
+        except Exception as e:
+            self._set_message(f"[red]Error reloading: {e}[/red]")
+
     def display_header(self):
         """Display the header with notebook info."""
         name = self.notebook.metadata.get("name", "Untitled")
