@@ -237,6 +237,22 @@ NB.comments = (function () {
       cancelBtn.disabled = true;
       askBtn.innerHTML = '<span class="comment-spinner"></span> Asking...';
 
+      // Log the AI call start
+      var parentEventId = null;
+      var aiEventId = null;
+      if (NB.agentLogger) {
+        parentEventId = NB.agentLogger.logStart('comment_add', {
+          cellId: cellId,
+          provider: selectedProvider
+        });
+        // Create child event for AI call
+        aiEventId = NB.agentLogger.logStart('ai_call', {
+          cellId: cellId,
+          provider: selectedProvider,
+          userComment: userComment.substring(0, 100)
+        }, parentEventId);
+      }
+
       NB.api.addComment(cellId, {
         from_line: from.line,
         from_ch: from.ch,
@@ -246,8 +262,19 @@ NB.comments = (function () {
         user_comment: userComment,
         provider: selectedProvider
       }).then(function (res) {
+        // Complete AI call event
+        if (NB.agentLogger && aiEventId) {
+          NB.agentLogger.logComplete(aiEventId, res.comment && res.comment.status === 'error' ? 'error' : 'success', {
+            commentId: res.comment ? res.comment.id : null
+          });
+        }
+
+        // Complete parent event
+        if (NB.agentLogger && parentEventId) {
+          NB.agentLogger.logComplete(parentEventId, res.comment && res.comment.status === 'error' ? 'error' : 'success');
+        }
+
         if (res.ok && res.comment) {
-          // Replace form with result widget
           replaceFormWithResult(cm, cellId, node, marker, res.comment);
         } else {
           askBtn.textContent = 'Ask AI';
@@ -257,6 +284,27 @@ NB.comments = (function () {
         }
       }).catch(function (err) {
         console.error('Comment error:', err);
+
+        // Check for timeout
+        var isTimeout = err.message && (
+          err.message.includes('timeout') ||
+          err.message.includes('시간 초과') ||
+          err.message.includes('시간초과') ||
+          err.message.includes('time out')
+        );
+
+        if (NB.agentLogger && aiEventId) {
+          if (isTimeout) {
+            NB.agentLogger.logTimeout(aiEventId, 120000); // 2 min default timeout
+          } else {
+            NB.agentLogger.logError(aiEventId, err);
+          }
+        }
+
+        if (NB.agentLogger && parentEventId) {
+          NB.agentLogger.logError(parentEventId, err);
+        }
+
         askBtn.textContent = 'Ask AI';
         askBtn.disabled = false;
         textarea.disabled = false;

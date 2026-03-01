@@ -10,6 +10,19 @@ NB.app = {
     // 1b. Initialize inline comments
     if (NB.comments) NB.comments.init();
 
+    // 1c. Initialize debug panel
+    if (NB.debugPanel) {
+      NB.debugPanel.init();
+    }
+
+    // 1d. Debug panel button handler
+    var debugBtn = document.getElementById('debug-btn');
+    if (debugBtn && NB.debugPanel) {
+      debugBtn.addEventListener('click', function() {
+        NB.debugPanel.toggle();
+      });
+    }
+
     // 2. Load notebook data from server
     try {
       var data = await NB.api.getNotebook();
